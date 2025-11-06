@@ -1,40 +1,54 @@
-﻿namespace WareHouse_Management.Conveyor_and_Motor
+﻿// -----------------------------------------------------------------------------
+// Purpose: Start/Stop the motor safely (Sprint 1 - US-1.1).
+// -----------------------------------------------------------------------------
+
+namespace WareHouse_Management.Conveyor_and_Motor
 {
-    // Interface for controlling the motor hardware
+    // Motor driver abstraction (real hardware or a fake in tests).
     public interface IMotorDriver
     {
         bool IsRunning { get; }
         void StartForward();
+        void Stop();
     }
 
-    // Interface for safety conditions (EStop and Fault)
+    // Safety inputs used to decide if starting is allowed.
     public interface ISafetyInputs
     {
-        bool EStop { get; }
-        bool Fault { get; }
+        bool EStop { get; }   // Emergency stop pressed?
+        bool Fault { get; }   // Any fault active?
     }
-
-    // Main class that controls motor behavior
+    // Controls the motor with safety checks.
     public class MotorController
     {
         private readonly IMotorDriver _driver;
         private readonly ISafetyInputs _safety;
 
-        // Constructor to connect motor driver and safety inputs
+        // Inject driver (hardware) and safety inputs.
         public MotorController(IMotorDriver driver, ISafetyInputs safety)
         {
             _driver = driver;
             _safety = safety;
         }
 
-        // Starts the motor only if EStop and Fault are not active
+   
+        // Start only when safe. If already running, return true without re-starting.     
         public bool Start()
         {
+            // Block start if unsafe
             if (_safety.EStop || _safety.Fault)
                 return false;
 
+            // Don't double-start
+            if (_driver.IsRunning)
+                return true;
+
+            // Safe to start
             _driver.StartForward();
             return true;
         }
+
+        /// Stop motor (safe to call multiple times).
+        public void Stop() => _driver.Stop();
     }
 }
