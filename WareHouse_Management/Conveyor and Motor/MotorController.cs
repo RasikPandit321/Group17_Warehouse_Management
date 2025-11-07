@@ -1,5 +1,5 @@
 ﻿// -----------------------------------------------------------------------------
-// Purpose: Start/Stop the motor safely (Sprint 1 - US-1.1).
+// Purpose: Start/Stop the motor safely 
 // -----------------------------------------------------------------------------
 
 namespace WareHouse_Management.Conveyor_and_Motor
