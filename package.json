@@ -1,0 +1,24 @@
+{
+  "name": "repo",
+  "version": "1.0.0",
+  "description": "Project 3 group project",
+  "main": "socket-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RasikPandit321/CSCN72020-Sec3-Group17.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RasikPandit321/CSCN72020-Sec3-Group17/issues"
+  },
+  "homepage": "https://github.com/RasikPandit321/CSCN72020-Sec3-Group17#readme",
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}

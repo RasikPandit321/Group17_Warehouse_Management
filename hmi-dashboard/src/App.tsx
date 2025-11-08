@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import io from 'socket.io-client';
+﻿import { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
 import {
     LineChart,
     Line,
@@ -9,13 +9,17 @@ import {
     CartesianGrid,
 } from 'recharts';
 
-const socket = io('http://localhost:3000');
+const socket = io('http://localhost:3001'); // matches socket-server.js
 
 function App() {
     const [status, setStatus] = useState('Disconnected');
     const [conveyorRunning, setConveyorRunning] = useState(false);
     const [speed, setSpeed] = useState(50);
     const [speedHistory, setSpeedHistory] = useState<{ time: number; speed: number }[]>([]);
+    const [alarms, setAlarms] = useState<string[]>([]);
+    const [temperature, setTemperature] = useState<number>(0);
+    const [barcode, setBarcode] = useState<string>('');
+    const [zone, setZone] = useState<string>('');
 
     // Connection status
     useEffect(() => {
@@ -23,7 +27,7 @@ function App() {
         socket.on('disconnect', () => setStatus('Disconnected'));
     }, []);
 
-    // Prepare for backend data stream
+    // Backend event listeners
     useEffect(() => {
         socket.on('conveyor:update', (data) => {
             setConveyorRunning(data.running);
@@ -31,8 +35,28 @@ function App() {
             setSpeedHistory((prev) => [...prev, { time: Date.now(), speed: data.speed }]);
         });
 
+        socket.on('alarm:new', ({ message }) => {
+            setAlarms((prev) => [...prev, message]);
+        });
+
+        socket.on('env:temperature', ({ value }) => {
+            setTemperature(parseFloat(value));
+        });
+
+        socket.on('barcode:scanned', ({ code }) => {
+            setBarcode(code);
+        });
+
+        socket.on('diverter:activated', ({ zone }) => {
+            setZone(zone);
+        });
+
         return () => {
             socket.off('conveyor:update');
+            socket.off('alarm:new');
+            socket.off('env:temperature');
+            socket.off('barcode:scanned');
+            socket.off('diverter:activated');
         };
     }, []);
 
@@ -54,7 +78,6 @@ function App() {
         setSpeedHistory((prev) => [...prev, { time: Date.now(), speed: newSpeed }]);
     };
 
-    // Fallback chart data
     const chartData = speedHistory.length > 0
         ? speedHistory
         : [{ time: Date.now(), speed }];
@@ -92,6 +115,17 @@ function App() {
                     <Tooltip />
                     <Line type="monotone" dataKey="speed" stroke="#8884d8" />
                 </LineChart>
+            </div>
+
+            <div style={{ marginTop: '40px' }}>
+                <h2>Live Data</h2>
+                <p>🌡 Temperature: {temperature}°C</p>
+                <p>📦 Last Barcode: {barcode}</p>
+                <p>🚦 Last Routed Zone: {zone}</p>
+                <h3>Alarms</h3>
+                <ul>
+                    {alarms.map((a, i) => <li key={i}>{a}</li>)}
+                </ul>
             </div>
         </div>
     );
