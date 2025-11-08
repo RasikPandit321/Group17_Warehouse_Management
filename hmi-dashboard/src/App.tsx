@@ -1,5 +1,5 @@
-﻿import { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+﻿import React from 'react';
+import { useEffect, useState } from 'react';
 import {
     LineChart,
     Line,
@@ -9,7 +9,7 @@ import {
     CartesianGrid,
 } from 'recharts';
 
-const socket = io('http://localhost:3001'); // matches socket-server.js
+import { socket } from './socket';
 
 function App() {
     const [status, setStatus] = useState('Disconnected');
@@ -36,7 +36,19 @@ function App() {
         });
 
         socket.on('alarm:new', ({ message }) => {
-            setAlarms((prev) => [...prev, message]);
+            const isReactElement =
+                typeof message === 'object' &&
+                message !== null &&
+                '$$typeof' in message;
+
+            const safeMessage =
+                isReactElement
+                    ? '⚠️ Invalid JSX alarm'
+                    : typeof message === 'string'
+                        ? message
+                        : JSON.stringify(message);
+
+            setAlarms((prev) => [...prev, safeMessage]);
         });
 
         socket.on('env:temperature', ({ value }) => {
@@ -124,7 +136,9 @@ function App() {
                 <p>🚦 Last Routed Zone: {zone}</p>
                 <h3>Alarms</h3>
                 <ul>
-                    {alarms.map((a, i) => <li key={i}>{a}</li>)}
+                    {alarms.map((a, i) => (
+                        <li key={i}>{a}</li>
+                    ))}
                 </ul>
             </div>
         </div>

@@ -1,0 +1,2 @@
+﻿[2025-11-08 13:49:09] System boot complete
+[2025-11-08 13:49:09] Emergency stop test triggered

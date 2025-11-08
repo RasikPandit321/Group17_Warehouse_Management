@@ -5,7 +5,7 @@
     "useDefineForClassFields": true,
     "lib": [ "ES2022", "DOM", "DOM.Iterable" ],
     "module": "ESNext",
-    "types": [ "vite/client", "@playwright/test" ], // ✅ Add Playwright types
+    "types": [ "vite/client", "@playwright/test" ],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -22,7 +22,11 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+
   },
   "include": [
     "src",
