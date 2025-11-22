@@ -31,5 +31,31 @@ namespace Warehouse_Management_Test
                 new TemperatureSensor(30, 20);
             });
         }
+
+        [TestMethod]
+        public void CsvMode_ReadsValuesFromCsvFile()
+        {
+            // Arrange – create a small temp CSV
+            string path = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllLines(path, new[] { "21.5", "23.0", "24.7" });
+
+                var sensor = TemperatureSensor.FromCsv(path);
+
+                double t1 = sensor.ReadTemperature();
+                double t2 = sensor.ReadTemperature();
+                double t3 = sensor.ReadTemperature();
+
+                Assert.AreEqual(21.5, t1, 0.01);
+                Assert.AreEqual(23.0, t2, 0.01);
+                Assert.AreEqual(24.7, t3, 0.01);
+            }
+            finally
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+        }
     }
 }
