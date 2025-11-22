@@ -1,0 +1,26 @@
+[
+  {
+    "id": "sim-1",
+    "message": "Emergency Stop Activated",
+    "severity": "High",
+    "timestamp": 0,
+    "description": "The physical E-Stop button at Station 1 was pressed. All operations have been halted immediately to ensure personnel safety.",
+    "recommended_action": "Check Station 1 for safety hazards. Reset E-Stop button physically before restarting system."
+  },
+  {
+    "id": "sim-2",
+    "message": "Conveyor Motor Overheat",
+    "severity": "Medium",
+    "timestamp": 0,
+    "description": "Motor Unit 3 is reading a temperature of 85°C, which exceeds the warning threshold of 80°C.",
+    "recommended_action": "Inspect Motor Unit 3 cooling fans. Reduce conveyor load if necessary."
+  },
+  {
+    "id": "sim-3",
+    "message": "Sensor 4 Misalignment",
+    "severity": "Low",
+    "timestamp": 0,
+    "description": "Photo-eye sensor #4 is detecting intermittent signal loss, suggesting it may have been bumped or blocked.",
+    "recommended_action": "Clean sensor lens and realign Photo-eye #4."
+  }
+]
