@@ -1,42 +1,345 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center; /* RESTORED: This keeps everything centered */
 }
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: filter 300ms;
 }
 
+    .logo:hover {
+        filter: drop-shadow(0 0 2em #646cffaa);
+    }
+
+    .logo.react:hover {
+        filter: drop-shadow(0 0 2em #61dafbaa);
+    }
+
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+    a:nth-of-type(2) .logo {
+        animation: logo-spin infinite 20s linear;
+    }
 }
 
 .card {
-  padding: 2em;
+    padding: 2em;
 }
 
 .read-the-docs {
-  color: #888;
+    color: #888;
+}
+
+/* --- Dashboard Layout --- */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Status Bar */
+.status-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    background-color: #333;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.status-ok {
+    color: #4caf50;
+}
+
+.status-err {
+    color: #f44336;
+}
+
+.status-running {
+    color: #4caf50;
+}
+
+.status-stopped {
+    color: #ff9800;
+}
+
+/* Controls */
+.controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.stop-btn {
+    background-color: #d32f2f;
+}
+
+    .stop-btn:hover {
+        background-color: #b71c1c;
+    }
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.speed-value {
+    font-family: monospace;
+    font-size: 1.2em;
+    color: #646cff;
+}
+
+/* Charts */
+.chart-panel {
+    background: #2a2a2a;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+/* --- Alarm Panel UI --- */
+.alarm-panel {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    /* RESTORED: Removed 'text-align: left' so it inherits center from #root */
+}
+
+.alarm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #555;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.alarm-count {
+    background: #444;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.9em;
+}
+
+.no-alarms {
+    color: #888;
+    padding: 20px;
+    font-style: italic;
+}
+
+.alarm-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.alarm-item {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    margin-bottom: 8px;
+    background-color: #333;
+    border-radius: 6px;
+    border-left: 5px solid transparent;
+    transition: transform 0.2s;
+}
+
+    /* Make alarms look clickable */
+    .alarm-item.clickable {
+        cursor: pointer;
+        position: relative;
+    }
+
+        .alarm-item.clickable:hover {
+            transform: translateX(5px);
+            filter: brightness(1.2);
+        }
+
+.alarm-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    margin-bottom: 5px;
+    color: #aaa;
+}
+
+.alarm-message {
+    font-weight: 500;
+    font-size: 1.1em;
+}
+
+.click-hint {
+    font-size: 0.7em;
+    color: #888;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* --- RESTORED: Alarm Severity Colors --- */
+.alarm-item.high {
+    border-left-color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+}
+
+    .alarm-item.high .alarm-severity {
+        color: #ff4444;
+        font-weight: bold;
+    }
+
+.alarm-item.medium {
+    border-left-color: #ffbb33;
+    background-color: rgba(255, 187, 51, 0.1);
+}
+
+    .alarm-item.medium .alarm-severity {
+        color: #ffbb33;
+        font-weight: bold;
+    }
+
+.alarm-item.low {
+    border-left-color: #33b5e5;
+    background-color: rgba(51, 181, 229, 0.1);
+}
+
+    .alarm-item.low .alarm-severity {
+        color: #33b5e5;
+        font-weight: bold;
+    }
+
+/* --- Modal Styles --- */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.modal-content {
+    background-color: #2a2a2a;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    overflow: hidden;
+    /* Removed 'text-align: left' here too, so the modal content is also centered */
+    animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #444;
+}
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.2em;
+    }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #fff;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.detail-section {
+    margin-top: 15px;
+    padding: 10px;
+    background: #333;
+    border-radius: 6px;
+}
+
+    .detail-section h5 {
+        margin: 0 0 5px 0;
+        color: #aaa;
+    }
+
+.modal-footer {
+    padding: 15px;
+    /* Keep buttons aligned right or center? I'll center it to match your preference */
+    text-align: center;
+    border-top: 1px solid #444;
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Header Colors match severity */
+.modal-header.high {
+    background-color: #d32f2f;
+}
+
+.modal-header.medium {
+    background-color: #ff9800;
+    color: #000;
+}
+
+.modal-header.low {
+    background-color: #0288d1;
 }
