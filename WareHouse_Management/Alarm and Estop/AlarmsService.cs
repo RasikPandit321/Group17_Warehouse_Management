@@ -33,7 +33,10 @@ namespace AlarmService
             using var sw = new StreamWriter(fs, Encoding.UTF8);
             // Prepend a timestamp (customize format as needed)
             sw.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}");
-            Console.Beep(450, 500);
+            if (OperatingSystem.IsWindows())
+            {
+                Console.Beep(450, 500);
+            }
         }
 
         // Read all alarm lines; returns empty array if file does not exist
