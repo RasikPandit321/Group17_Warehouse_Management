@@ -11,6 +11,7 @@ namespace Warehouse_Management_Test.SystemIntegrationTests
     public class SystemIntegrationTests
     {
         // --- Helper Method ---
+        // sets the entire integrated system chain
         private WarehouseTransportSystem SetupIntegratedSystem(
             out FakeMotorDriver driver, out FakeSafety safety, out FakeJamSensor jamSensor)
         {
@@ -23,120 +24,123 @@ namespace Warehouse_Management_Test.SystemIntegrationTests
             return new WarehouseTransportSystem(motor, conveyor);
         }
 
-        // -------------------------------------------------------------
-        // A. CORE OPERATIONAL TESTS
-        // -------------------------------------------------------------
-
         [TestMethod]
-        public void Test01_System_StartAndStop_Successful()
+        public void System_StartAndStop_Successful()    // checks if start stop is successful 
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
+           
+            // ACT: start and then stop the integrated system
             system.StartSystem();
             Assert.IsTrue(driver.IsRunning);
+
             system.StopSystem();
             Assert.IsFalse(driver.IsRunning);
         }
 
         [TestMethod]
-        public void Test02_System_StartTwice_MotorOnlyStartsOnce()
+        public void System_StartTwice_MotorOnlyStartsOnce()   // confirms system prevents redundant motor start commands
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
+            // ACT: Call start system twice
             system.StartSystem();
             system.StartSystem();
+            // Assert: Check the FakeDriver to confirm start was only called once
             Assert.AreEqual(1, driver.StartForwardCalls);
         }
 
         [TestMethod]
-        public void Test03_System_StopWhenAlreadyStopped_DoesNotThrow()
+        public void System_StopWhenAlreadyStopped_DoesNotThrow()  // confirms stop system() is safe to call multiple times
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
+            // ACT: stop system twice
             system.StopSystem();
             system.StopSystem();
+            // Assert: Check state (passes if no exception is thrown)
             Assert.IsFalse(driver.IsRunning);
         }
 
-        // -------------------------------------------------------------
-        // B. SAFETY AND BLOCKING TESTS
-        // -------------------------------------------------------------
-
         [TestMethod]
-        public void Test04_System_Start_WhenEStopActive_ShouldBeBlocked()
+        public void System_Start_WhenEStopActive_ShouldBeBlocked() // Confirms E-stop block the high level start command
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
             safety.EStop = true;
+            // ACT: Attempt to start the system
             var startOk = system.StartSystem();
+            // Assert: Varify start is blocked
             Assert.IsFalse(startOk);
             Assert.IsFalse(driver.IsRunning);
         }
 
         [TestMethod]
-        public void Test05_System_Start_WhenFaultActive_ShouldBeBlocked()
+        public void System_Start_WhenFaultActive_ShouldBeBlocked() // Confirms Motor Fault blocks the high level start command
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
-            safety.Fault = true;
+            safety.Fault = true;  // simulate a motor fault
+            // ACT: Attempt to start the system
             var startOk = system.StartSystem();
+            // Assert: Verify start is blocked
             Assert.IsFalse(startOk);
             Assert.IsFalse(driver.IsRunning);
         }
 
         [TestMethod]
-        public void Test06_System_EStop_WhileRunning_BlocksRestartAfterStop()
+        public void System_EStop_WhileRunning_BlocksRestartAfterStop() // COnfirms safety applies even when system is stopped
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
             system.StartSystem();
-            system.StopSystem();
+            system.StopSystem();  // Motor is now stopped
 
+            // Act: Estop is pressed while idle, then system tries to start
             safety.EStop = true;
             var startAttempt = system.StartSystem();
-
+            // Assert: Verify start is still blocked
             Assert.IsFalse(startAttempt);
             Assert.IsFalse(driver.IsRunning);
         }
 
-        // -------------------------------------------------------------
-        // C. JAM DETECTION AND RECOVERY TESTS
-        // -------------------------------------------------------------
-
         [TestMethod]
-        public void Test07_FullSystem_JamDetection_StopsMotorImmediately()
+        public void FullSystem_JamDetection_StopsMotorImmediately()  // Confirms jam detection triggers safe shutdown
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
             system.StartSystem();
+
+            // ACT: Simulate jam and system check
             jamSensor.JamDetected = true;
             system.PollSystemForIssues();
 
+            // Assert: Verify system reacted
             Assert.IsFalse(driver.IsRunning);
             Assert.IsTrue(system.IsJamActive);
         }
 
         [TestMethod]
-        public void Test08_System_PollIssues_WhenNoJam_DoesNotStopMotor()
+        public void System_PollIssues_WhenNoJam_DoesNotStopMotor() // confirms background poll doesnot interrupt normal run
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
             system.StartSystem();
             var callsBefore = driver.StartForwardCalls;
-
+            // ACT: System Poll check while running and safe
             system.PollSystemForIssues();
-
+            // AssertL Verify motor state is unchnaged
             Assert.IsTrue(driver.IsRunning);
             Assert.AreEqual(callsBefore, driver.StartForwardCalls);
         }
 
         [TestMethod]
-        public void Test09_System_Start_WhileJamActive_IsBlocked()
+        public void System_Start_WhileJamActive_IsBlocked()  // confirms system cannot restart while jam flag is set
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
             jamSensor.JamDetected = true;
             system.PollSystemForIssues(); // Sets JamActive = true
-
+            // ACT: Attempt to start
             var startAttempt = system.StartSystem();
-
+            // Assert : Verify start is blocked
             Assert.IsFalse(startAttempt);
             Assert.IsFalse(driver.IsRunning);
         }
 
         [TestMethod]
-        public void Test10_System_CannotClearJam_IfSensorStillDetected()
+        public void System_CannotClearJam_IfSensorStillDetected() // Confirms logical clearance is blocked by physical sensor
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
             system.StartSystem();
@@ -146,33 +150,30 @@ namespace Warehouse_Management_Test.SystemIntegrationTests
             // ACT: Technician attempts to clear fault, BUT sensor is still TRUE
             system.ClearSystemFault();
 
+            // Assert: Verify jam state remains active
             Assert.IsTrue(system.IsJamActive, "Jam state MUST NOT be cleared.");
             Assert.IsFalse(system.StartSystem(), "Start should still be blocked.");
         }
 
-        // -------------------------------------------------------------
-        // D. STATUS AND FINAL INTEGRATION TESTS
-        // -------------------------------------------------------------
-
         [TestMethod]
-        public void Test11_System_StatusReportsCorrectly_WhenRunning()
+        public void System_StatusReportsCorrectly_WhenRunning() // Confirms status properties wok when system is operational
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
             system.StartSystem();
-
+            // Assert: Check the high level status properties
             Assert.IsTrue(system.IsRunning, "IsRunning status should be true.");
             Assert.IsFalse(system.IsJamActive, "IsJamActive status should be false.");
         }
 
         [TestMethod]
-        public void Test12_System_StatusReportsCorrectly_WhenJamActive()
+        public void System_StatusReportsCorrectly_WhenJamActive() // Confirms status properties reflect a fault state
         {
             var system = SetupIntegratedSystem(out var driver, out var safety, out var jamSensor);
             system.StartSystem();
-
+            // ACT: simulate jam
             jamSensor.JamDetected = true;
             system.PollSystemForIssues();
-
+            // Assert: Check the high-level status properties
             Assert.IsFalse(system.IsRunning, "IsRunning status should be false (motor stopped).");
             Assert.IsTrue(system.IsJamActive, "IsJamActive status should be true.");
         }
