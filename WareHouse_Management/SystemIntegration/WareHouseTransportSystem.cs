@@ -53,11 +53,6 @@ namespace WareHouse_Management.SystemIntegration
 
             return "IDLE: Ready to Start.";
         }
-
-        // ----------------------------------------------------------------------
-        // --- ITransportService IMPLEMENTATION (For Sorting Module) ---
-        // ----------------------------------------------------------------------
-
         public bool RequestMovement(string packageId)
         {
             // Sorting requests movement. We only proceed if the system is ready.
