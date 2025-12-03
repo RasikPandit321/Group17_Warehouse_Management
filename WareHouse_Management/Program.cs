@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using WareHouse_Management.Environment;
 
@@ -36,8 +37,56 @@ namespace WareHouse_Management
             }
 
             Console.WriteLine();
+            Console.WriteLine("Running energy analysis...");
+            await GenerateEnergyReportAsync();
+
+            Console.WriteLine();
             Console.WriteLine("Completed. Press any key to exit...");
             Console.ReadKey();
+        }
+        private static async Task GenerateEnergyReportAsync()
+        {
+            int sampleCount = 60;
+            int sampleIntervalMs = 1000;
+            double intervalSeconds = sampleIntervalMs / 1000.0;
+
+            var sensor = new TemperatureSensor(22, 32);
+            var fan = new FanController(onThreshold: 30, offThreshold: 25);
+
+            var samples = new List<EnergySample>();
+
+            Console.WriteLine("Collecting monitoring data (60 seconds)...");
+            Console.WriteLine("Time        Temp (°C)   Fan");
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                double temp = sensor.ReadTemperature();
+                fan.UpdateTemperature(temp);
+
+                samples.Add(new EnergySample
+                {
+                    Temperature = temp,
+                    FanOn = fan.IsOn
+                });
+
+                string fanState = fan.IsOn ? "ON" : "OFF";
+                Console.WriteLine($"{DateTime.Now:HH:mm:ss}   {temp,6:F1}      {fanState}");
+
+                await Task.Delay(sampleIntervalMs);
+            }
+
+            EnergyReport report = EnergyReporter.ComputeFromSamples(samples, intervalSeconds);
+            string csvPath = EnergyReporter.SaveToCsv(report);
+
+            Console.WriteLine();
+            Console.WriteLine("Energy report generated.");
+            Console.WriteLine("------------------------");
+            Console.WriteLine($"Report File: {csvPath}");
+            Console.WriteLine($"Average Temperature     : {report.AverageTemperature:F2} °C");
+            Console.WriteLine($"Average Fan Runtime     : {report.AverageFanRuntimeSeconds:F2} s");
+            Console.WriteLine($"Total Fan ON Time       : {report.TotalFanOnSeconds:F2} s");
+            Console.WriteLine($"Fan ON Percentage       : {report.FanOnPercent:F1}%");
+            Console.WriteLine($"Energy Score (0–100)    : {report.EnergyScore:F1}");
         }
     }
 }
