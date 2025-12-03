@@ -78,11 +78,6 @@ namespace WareHouse_Management
             bool ok = transportSystem.StartSystem();
             Console.WriteLine($"Start successful: {ok}, Motor running: {transportSystem.IsRunning}");
         }
-
-        // -------------------------------
-        // Simulation classes (Remain unchanged)
-        // -------------------------------
-
         public class DemoMotorDriver : IMotorDriver
         {
             public bool IsRunning { get; private set; }
