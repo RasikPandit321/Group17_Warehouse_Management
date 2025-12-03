@@ -10,15 +10,12 @@ public class MotorControllerTests
     [TestMethod]
     public void Start_WhenSafe_ShouldReturnTrue_AndRunMotor()
     {
-        // Arrange
         var driver = new FakeMotorDriver();
         var safety = new FakeSafety { EStop = false, Fault = false };
         var motor = new MotorController(driver, safety);
 
-        // Act
         var ok = motor.Start();
 
-        // Assert
         Assert.IsTrue(ok, "Motor should start when no EStop or Fault is active.");
         Assert.IsTrue(driver.IsRunning, "Driver should show motor running.");
     }
@@ -132,4 +129,10 @@ public sealed class FakeSafety : ISafetyInputs
 {
     public bool EStop { get; set; }
     public bool Fault { get; set; }
+}
+
+// Jam sensor fake for conveyor tests
+public sealed class FakeJamSensor : IJamSensor
+{
+    public bool JamDetected { get; set; }
 }
