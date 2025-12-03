@@ -1,11 +1,9 @@
-// -----------------------------------------------------------------------------
-// File: SystemIntegrationTests.cs
-// Purpose: Tests the collaboration between MotorController and ConveyorController.
-// -----------------------------------------------------------------------------
+// Tests the collaboration between MotorController and ConveyorController.
+
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WareHouse_Management.Conveyor_and_Motor;
-using WareHouse_Management.SystemIntegration; // Your integration class location
+using WareHouse_Management.SystemIntegration; //  integration class location
 
 namespace Warehouse_Management_Test.SystemIntegrationTests
 {
