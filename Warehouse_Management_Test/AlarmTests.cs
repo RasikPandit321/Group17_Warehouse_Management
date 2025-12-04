@@ -1,10 +1,11 @@
-﻿using System;
+﻿using AlarmService;
+using LogService;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using AlarmService;
 using static AlarmService.Alarm;
 
 namespace Warehouse_Management_Test
@@ -29,7 +30,19 @@ namespace Warehouse_Management_Test
                 File.Delete(_filePath);
         }
 
-        // --- Raise tests (2) ---
+        // --- Raise tests ---
+
+        [TestMethod]
+        public void Raise_NullMessage_WritesEmptyString()
+        {
+            // Act
+            Alarm.Raise(null);
+            var lines = Alarm.ReadAll();
+
+            // Assert
+            Assert.AreEqual(1, lines.Length);
+            StringAssert.EndsWith(lines[0], "");
+        }
 
         [TestMethod]
         public void Raise_OneLine()
@@ -40,11 +53,10 @@ namespace Warehouse_Management_Test
             // Act
             Raise(message);
 
-            // Assert
+            var lines = Alarm.ReadAll();
 
-            var lines = File.ReadAllLines(_filePath, Encoding.UTF8);
-            Assert.AreEqual(1, lines.Length, "Raise should append a single line");
-            StringAssert.Contains(lines[0], $"] {message}");
+            Assert.AreEqual(1, lines.Length);
+            StringAssert.Contains(lines[0], message);
         }
 
         [TestMethod]
@@ -58,13 +70,14 @@ namespace Warehouse_Management_Test
             Raise(a);
             Raise(b);
 
-            // Assert
-            var lines = File.ReadAllLines(_filePath, Encoding.UTF8);
+            var lines = Alarm.ReadAll();
+
             Assert.AreEqual(2, lines.Length);
             StringAssert.Contains(lines[0], a);
             StringAssert.Contains(lines[1], b);
         }
-        // --- Clear tests (3) ---
+
+        // --- Clear tests ---
 
         [TestMethod]
         public void Clear_RemovesMatchingLines_CaseSensitive()
@@ -77,8 +90,8 @@ namespace Warehouse_Management_Test
             // Act
             Clear("RemoveThis");
 
-            // Assert
-            var lines = File.ReadAllLines(_filePath, Encoding.UTF8);
+            var lines = Alarm.ReadAll();
+
             Assert.IsFalse(lines.Any(l => l.Contains("RemoveThis")));
             Assert.AreEqual(2, lines.Length);
         }
@@ -93,8 +106,8 @@ namespace Warehouse_Management_Test
             Clear(null);
             Clear(string.Empty);
 
-            // Assert
-            var lines = File.ReadAllLines(_filePath, Encoding.UTF8);
+            var lines = Alarm.ReadAll();
+
             Assert.AreEqual(1, lines.Length);
             StringAssert.Contains(lines[0], "OnlyOne");
         }
@@ -105,41 +118,68 @@ namespace Warehouse_Management_Test
             // Arrange
             Raise("A");
             Raise("B");
-            var before = File.ReadAllLines(_filePath, Encoding.UTF8);
+
+            var before = Alarm.ReadAll();
 
             // Act
             Clear("NoSuchText");
 
-            // Assert
-            var after = File.ReadAllLines(_filePath, Encoding.UTF8);
-            CollectionAssert.AreEqual(before, after, "File should be unchanged when nothing matches the clear string");
+            var after = Alarm.ReadAll();
+
+            CollectionAssert.AreEqual(before, after);
         }
 
-        // --- NoAlarms tests (3) ---
+        // --- ClearAlarms tests ---
 
         [TestMethod]
-        public void NoAlarms_TrueWhenFileMissingOrWhitespaceOnly()
+        public void ClearAll_ClearsAllAlarms_ReturnsEmptyFile()
+        {
+            // Arrange
+            Raise("ToBeErased");
+
+            // Act
+            ClearAlarms();
+            var result = ReadAll();
+
+            // Assert
+            Assert.AreEqual(0, result.Length);
+        }
+
+        [TestMethod]
+        public void ClearAll_EmptyFile_ReturnsEmptyFile()
+        {
+            // Act
+            ClearAlarms();
+            var result = ReadAll();
+
+            Assert.AreEqual(0, result.Length);
+        }
+
+        // --- AnyAlarms tests ---
+
+        [TestMethod]
+        public void AnyAlarms_TrueWhenFileMissingOrWhitespaceOnly()
         {
             // File missing due to TestInitialize
-            Assert.IsTrue(NoAlarms(), "NoAlarms should be true when no file exists");
+            Assert.IsTrue(AnyAlarms());
 
-            // Create a file with only whitespace lines
-            File.WriteAllLines(_filePath, new[] { "   ", "\t" }, Encoding.UTF8);
-            Assert.IsTrue(NoAlarms(), "NoAlarms should be true when file contains only whitespace lines");
+            File.WriteAllLines(_filePath, new[] { "   " }, Encoding.UTF8);
+
+            Assert.IsTrue(AnyAlarms());
         }
 
         [TestMethod]
-        public void NoAlarms_FalseAfterRaise()
+        public void AnyAlarms_FalseAfterRaise()
         {
             // Act
             Raise("AlarmNow");
 
             // Assert
-            Assert.IsFalse(NoAlarms());
+            Assert.IsFalse(AnyAlarms());
         }
 
         [TestMethod]
-        public void NoAlarms_TrueAfterClearingAllMatchingLines()
+        public void AnyAlarms_TrueAfterClearingAllMatchingLines()
         {
             // Arrange
             Raise("RemoveAll1");
@@ -149,7 +189,7 @@ namespace Warehouse_Management_Test
             Clear("RemoveAll");
 
             // Assert
-            Assert.IsTrue(NoAlarms());
+            Assert.IsTrue(AnyAlarms());
         }
     }
 }

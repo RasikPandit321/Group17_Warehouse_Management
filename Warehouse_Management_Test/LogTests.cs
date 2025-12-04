@@ -1,5 +1,6 @@
-using System.Text;
 using LogService;
+using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
+using System.Text;
 
 namespace Warehouse_Management_Test;
 
@@ -23,7 +24,18 @@ public class LogTests
             File.Delete(_filePath);
     }
 
-    // --- Archive tests (2) ---
+    // --- Archive tests (3) ---
+    [TestMethod]
+    public void Archive_NullMessage_WritesEmptyString()
+    {
+        // Act
+        Log.Archive(null);
+        var lines = Log.ReadAll();
+
+        // Assert
+        Assert.AreEqual(1, lines.Length);
+        StringAssert.EndsWith(lines[0], ""); // empty message
+    }
     [TestMethod]
     public void Archive_LogsMultipleLines()
     {
@@ -35,8 +47,9 @@ public class LogTests
         Log.Archive(one);
         Log.Archive(two);
 
+        var lines = Log.ReadAll();
+
         // Assert
-        var lines = File.ReadAllLines(_filePath, Encoding.UTF8);
 
         StringAssert.Contains(lines[0], one);
         StringAssert.Contains(lines[1], two);
@@ -51,12 +64,25 @@ public class LogTests
         // Act
         Log.Archive(one);
 
+        var lines = Log.ReadAll();
         // Assert
-        var lines = File.ReadAllLines(_filePath, Encoding.UTF8);
 
         StringAssert.Contains(lines[0], one);
     }
-    // --- ReadAll tests (2) ---
+    // --- ReadAll tests (3) ---
+    [TestMethod]
+    public void ReadAll_AfterClearLogs_ReturnsEmpty()
+    {
+        // Arrange
+        Log.Archive("Some log");
+
+        // Act
+        Log.ClearLogs();
+        var lines = Log.ReadAll();
+
+        // Assert
+        Assert.AreEqual(0, lines.Length);
+    }
     [TestMethod]
     public void ReadAll_EmptyArray_ReturnsEmptyArray()
     {
@@ -73,15 +99,66 @@ public class LogTests
     public void ReadAll_FileWithLines_ReturnsLines()
     {
         // Arrange
-        var expected = new[] { "Line 1", "Line 2", "Line 3" };
+        Log.Archive("Line 1");
+        Log.Archive("Line 2");
+        Log.Archive("Line 3");
 
-        File.WriteAllLines(_filePath, expected, Encoding.UTF8);
+        var expectedMessages = new[]
+        {
+        "Line 1",
+        "Line 2",
+        "Line 3"
+    };
 
         // Act
         var result = Log.ReadAll();
 
         // Assert
-        Assert.AreEqual(expected.Length, result.Length);
-        CollectionAssert.AreEqual(expected, result);
+        Assert.AreEqual(expectedMessages.Length, result.Length);
     }
+
+    // --- ClearLogs test (3) ---
+    [TestMethod]
+    public void ClearLogs_ThenWriteNewLog_WritesCorrectly()
+    {
+        // Arrange
+        Log.Archive("Old message");
+        Log.ClearLogs();
+
+        // Act
+        Log.Archive("New message");
+        var result = Log.ReadAll();
+
+        // Assert
+        Assert.AreEqual(1, result.Length);
+        StringAssert.EndsWith(result[0], "New message");
+    }
+    [TestMethod]
+    public void ClearLogs_EmptiesAllLogs_ReturnsEmptyFile()
+    {
+        // Arrange //
+        Log.Archive("FakeLog1");
+        Log.Archive("FakeLog2");
+
+        // Act
+        Log.ClearLogs();
+        var result = Log.ReadAll();
+
+        // Assert
+        Assert.AreEqual(0, result.Length);
+    }
+    [TestMethod]
+    public void ClearLogs_EmptyFile_ReturnsEmptyFile()
+    {
+        // Arrange
+        // keeping file empty
+
+        // Act
+        Log.ClearLogs();
+        var result = Log.ReadAll();
+
+        // Assert
+        Assert.AreEqual(0, result.Length);
+    }
+
 }

@@ -15,24 +15,23 @@ namespace WareHouse_Management
             Raise($"ALARM: Pressure spike");
             Raise($"ALARM: Temperature high (sensor 2)");
 
-            Console.WriteLine("Alarms after raising:");
-            PrintAllAlarms();
-
-            // Clear any lines that contain "Temperature high"
-            Clear("Temperature");
-
-            Console.WriteLine();
-            Console.WriteLine("Alarms after clearing 'Temperature':");
-
-            Clear("Pressure");
-            // Call the static EmergencyStop without instantiating it
-            EmergencyStop.Estop($"EMERGENCY: Manual stop requested");
-
             PrintAllAlarms();
 
             Log.Archive("Something");
 
             Log.PrintLogs();
+
+            Console.WriteLine("\n\nAfter clear below\n\n");
+
+            Log.ClearLogs();
+
+            Log.PrintLogs();
+
+            ClearAlarms();
+
+            PrintAllAlarms();
+
+ 
         }
     }
 }

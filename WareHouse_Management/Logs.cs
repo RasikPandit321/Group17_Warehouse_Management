@@ -46,14 +46,20 @@ namespace LogService
             foreach (var line in lines)
                 Console.WriteLine(line);
         }
-        // Read all logs; returns empty array if file does not exist
+        // Read all logs;  returns empty array if file does not exist
         public string[] ReadAll()
         {
             if (!File.Exists(FilePath))
                 return Array.Empty<string>();
             return File.ReadAllLines(FilePath, Encoding.UTF8);
         }
+        public void ClearLogs()
+        {
+            EnsureDirectory();
+            File.WriteAllText(FilePath, string.Empty, Encoding.UTF8);
+        }
 
+        // makes sure the file exists and creates it if it doesn't
         private void EnsureDirectory()
         {
             var dir = Path.GetDirectoryName(FilePath);
@@ -68,5 +74,6 @@ namespace LogService
         public static void Archive(string message) => _default.Archive(message);
         public static string[] ReadAll() => _default.ReadAll();
         public static void PrintLogs() => _default.PrintLogs();
+        public static void ClearLogs() => _default.ClearLogs();
     }
 }
