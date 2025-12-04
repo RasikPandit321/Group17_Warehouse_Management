@@ -7,19 +7,14 @@
 
         public MockBarcodeReader(string[] barcodes)
         {
-            _barcodes = barcodes;
+            _barcodes = barcodes ?? new string[0];
         }
 
         public string Read()
         {
-            if (_barcodes.Length == 0)
-                return string.Empty;
-
+            if (_barcodes.Length == 0) return string.Empty;
             var value = _barcodes[_index];
-
-            // Move to next, loop if needed
             _index = (_index + 1) % _barcodes.Length;
-
             return value;
         }
     }

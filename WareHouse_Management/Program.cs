@@ -6,19 +6,11 @@ namespace WareHouse_Management
     {
         static void Main(string[] args)
         {
-            var ruleEngine = new RuleEngine();
-            var diverter = new DiverterGateController();
-            var scanner = new BarcodeScannerSensor("barcodes.txt");
+            // For Sprint 3 demo, call the Sprint3 runner
+            RoutingDemoForSprint3.RunDemo();
 
-            // Connect events
-            scanner.OnBarcodeScanned += (barcode) =>
-            {
-                string zone = ruleEngine.DetermineRoute(barcode);
-                diverter.ActivateGate(zone);
-            };
-
-            // Start simulation
-            scanner.StartScanning();
+            // If you want to run Sprint2 demo instead:
+            // RoutingDemo.Run();
         }
     }
 }

@@ -1,6 +1,10 @@
 ﻿namespace Warehouse
 {
-    public class RoutingEngine : IRoutingEngine
+    /// <summary>
+    /// A non‑optimized implementation of IRoutingEngine,
+    /// identical to your original routing logic.
+    /// </summary>
+    public sealed class SimpleRoutingEngine : IRoutingEngine
     {
         private const double OverweightLimit = 50.0;
 
