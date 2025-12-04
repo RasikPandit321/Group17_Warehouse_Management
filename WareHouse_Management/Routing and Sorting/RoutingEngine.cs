@@ -2,28 +2,37 @@ using System;
 
 namespace Warehouse
 {
-    /// <summary>
-    /// Default implementation of the routing logic.
-    /// </summary>
-    public sealed class RoutingEngine : IRoutingEngine
+    public class RoutingEngine : IRoutingEngine
     {
         private const double OverweightLimit = 50.0;
 
-        /// <summary>
-        /// Determines the correct lane for a package based on its weight.
-        /// </summary>
         public Routing Route(string barcode, double weight)
         {
+            string lane;
+
+            // 1. Safety Check: Overweight packages are blocked immediately
             if (weight > OverweightLimit)
-                return new Routing(barcode, weight, "BLOCKED");
+            {
+                lane = "BLOCKED";
+            }
+            // 2. Sorting Logic: Route based on weight
+            else if (weight < 5.0)
+            {
+                lane = "Lane1"; // Small items
+            }
+            else if (weight < 10.0)
+            {
+                lane = "Lane2"; // Medium items
+            }
+            else
+            {
+                lane = "Lane3"; // Heavy items
+            }
 
-            if (weight < 5)
-                return new Routing(barcode, weight, "Lane1");
+            // Future expansion: You could add logic here to check 'barcode' string 
+            // if you wanted specific barcodes to go to special zones.
 
-            if (weight < 10)
-                return new Routing(barcode, weight, "Lane2");
-
-            return new Routing(barcode, weight, "Lane3");
+            return new Routing(barcode, weight, lane);
         }
     }
 }

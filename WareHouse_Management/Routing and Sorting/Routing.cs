@@ -1,8 +1,5 @@
 namespace Warehouse
 {
-    /// <summary>
-    /// Represents the routing result for a scanned package.
-    /// </summary>
     public class Routing
     {
         public string Barcode { get; }

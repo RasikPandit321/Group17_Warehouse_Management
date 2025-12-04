@@ -1,146 +1,190 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
+using SocketIOClient;
 using AlarmService;
 using WareHouse_Management.Conveyor_and_Motor;
 using WareHouse_Management.Environment;
-using Warehouse; // For Routing classes
+using Warehouse;
 
 namespace WareHouse_Management
 {
     internal class Program
     {
+        // Global reference to Socket client
+        static SocketIOClient.SocketIO client = null!;
+
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
+            Console.WriteLine("=== SMART WAREHOUSE SYSTEM (SPRINT 3) ===");
+            Console.WriteLine("Connecting to HMI Dashboard...");
 
-            Console.WriteLine("=== WAREHOUSE INTEGRATION SYSTEM ===");
-            Console.WriteLine("Controls: [S] Start Motor  [X] Stop Motor  [J] Toggle Jam  [E] Toggle E-Stop  [Q] Quit");
-            Console.WriteLine("--------------------------------------------------------------------------------");
+            // --- 1. SOCKET.IO SETUP ---
+            client = new SocketIOClient.SocketIO("http://localhost:3001");
 
-            // 1. SETUP ENVIRONMENT (US-2.5)
-            // Simulate random temp between 20C and 35C
+            client.OnConnected += (sender, e) => {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("✅ Connected to HMI Dashboard!");
+                Console.ResetColor();
+            };
+
+            // Listen for commands FROM the Dashboard
+            client.On("conveyor:start", response => {
+                Console.WriteLine(" [HMI CMD] Start Received");
+            });
+
+            try
+            {
+                await client.ConnectAsync();
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("⚠️ Could not connect to HMI. Is the Node server running?");
+            }
+
+            // --- 2. SYSTEM SETUP ---
+            // Environment (Sprint 3)
             var tempSensor = new TemperatureSensor(20, 35);
-            // Fan ON at 30C, OFF at 25C (Hysteresis)
             var fan = new FanController(30, 25);
+            var energySamples = new List<EnergySample>(); // Store samples for reporting
 
-            // 2. SETUP CONVEYOR (US-2.1)
-            var hardware = new SimulatedHardware(); // The fake motor/sensors
-            var motorCtrl = new MotorController(hardware, hardware); // Motor needs driver + safety inputs
-            var conveyorCtrl = new ConveyorController(motorCtrl, hardware); // Conveyor needs motor + jam sensor
+            // Conveyor & Safety
+            var hardware = new SimulatedHardware();
+            var motorCtrl = new MotorController(hardware, hardware);
+            var conveyorCtrl = new ConveyorController(motorCtrl, hardware);
 
-            // 3. SETUP ROUTING (US-2.4)
+            // Routing
             var routingEngine = new RoutingEngine();
             var diverter = new DiverterGateController();
 
-            // Check if barcodes.txt exists, create dummy if not to prevent crash
+            // Ensure data file exists
             if (!System.IO.File.Exists("barcodes.txt"))
-                System.IO.File.WriteAllLines("barcodes.txt", new[] { "PKG-A1", "PKG-B2", "PKG-C3", "PKG-HEAVY" });
+                System.IO.File.WriteAllLines("barcodes.txt", new[] { "PKG-100", "PKG-500", "PKG-900" });
 
             var scanner = new BarcodeScannerSensor("barcodes.txt");
-            var randomWeight = new Random();
+            var random = new Random();
 
-            // 4. WIRING EVENTS
+            // --- 3. WIRING EVENTS ---
 
-            // Routing Event Logic
-            scanner.OnBarcodeScanned += (barcode) =>
+            // Handle HMI Commands
+            client.On("conveyor:start", _ => conveyorCtrl.Start());
+            client.On("conveyor:stop", _ => conveyorCtrl.Stop());
+            client.On("conveyor:speed", response => {
+                // Future: Handle speed changes here
+            });
+
+            // Routing Event Logic (Only define this ONCE)
+            scanner.OnBarcodeScanned += async (barcode) =>
             {
-                // Simulate weight (1kg to 60kg) to test Blocking logic
-                double weight = randomWeight.NextDouble() * 59.0 + 1.0;
-
+                double weight = random.NextDouble() * 59.0 + 1.0;
                 var route = routingEngine.Route(barcode, weight);
 
-                // Log the decision (Requirement: Log ID, lane, timestamp)
-                string logMsg = $"[ROUTING] {DateTime.Now:T} | ID: {route.Barcode} | W: {route.Weight:F1}kg | -> {route.TargetLane}";
+                string logMsg = $"[ROUTING] {barcode} ({weight:F1}kg) -> {route.TargetLane}";
 
                 if (route.TargetLane == "BLOCKED")
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(logMsg + " (OVERWEIGHT!)");
-                    Alarm.Raise($"Overweight package detected: {barcode}"); // Audible Alarm (US-2.3)
-                    Console.ResetColor();
+                    Console.WriteLine(logMsg + " [REJECTED]");
+                    Alarm.Raise($"Overweight: {barcode}");
+                    await client.EmitAsync("alarm:new", new { message = $"Overweight Pkg: {barcode}" });
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     Console.WriteLine(logMsg);
-                    Console.ResetColor();
                     diverter.ActivateGate(route.TargetLane);
                 }
+                Console.ResetColor();
+
+                await client.EmitAsync("barcode:scanned", new { code = barcode });
+                await client.EmitAsync("diverter:activated", new { zone = route.TargetLane });
             };
 
-            // Run Barcode Scanner in background task so it doesn't block the Temp loop
-            var scannerTask = Task.Run(() => scanner.StartScanning());
+            // Start Scanner in background
+            _ = Task.Run(() => scanner.StartScanning());
 
-            // 5. MAIN SIMULATION LOOP
+            Console.WriteLine("System Running. Press [Q] to Quit, [J] Jam, [E] E-Stop.");
+
+            // --- 4. MAIN SIMULATION LOOP (Required for Sprint 3 Logic) ---
             while (true)
             {
+                // A. Handle Keyboard Input
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true).Key;
                     if (key == ConsoleKey.Q) break;
 
-                    switch (key)
+                    if (key == ConsoleKey.J)
                     {
-                        case ConsoleKey.S:
-                            Console.WriteLine(" [CMD] Start Request...");
-                            if (conveyorCtrl.Start()) Console.WriteLine(" [CMD] Request Accepted.");
-                            else Console.WriteLine(" [CMD] Request Denied (Check Safety/Jam).");
-                            break;
-                        case ConsoleKey.X:
-                            Console.WriteLine(" [CMD] Stop Request...");
-                            conveyorCtrl.Stop();
-                            break;
-                        case ConsoleKey.J:
-                            hardware.JamDetected = !hardware.JamDetected;
-                            string jamMsg = hardware.JamDetected ? "JAM DETECTED" : "JAM CLEARED";
-                            Console.WriteLine($" [SENSOR] {jamMsg}");
-                            if (hardware.JamDetected)
-                            {
-                                conveyorCtrl.CheckJam(); // This triggers auto-stop
-                                Alarm.Raise("Conveyor Jammed!"); // Audible Alarm (US-2.3)
-                            }
-                            else
-                            {
-                                conveyorCtrl.ClearJam();
-                            }
-                            break;
-                        case ConsoleKey.E:
-                            hardware.EStop = !hardware.EStop;
-                            string eMsg = hardware.EStop ? "E-STOP ACTIVE" : "E-STOP RELEASED";
-                            Console.WriteLine($" [SAFETY] {eMsg}");
-                            if (hardware.EStop)
-                            {
-                                motorCtrl.Stop(); // Hard stop
-                                EmergencyStop.Estop("Manual E-Stop Pressed"); // Logs and Beeps (US-2.3)
-                            }
-                            break;
+                        hardware.JamDetected = !hardware.JamDetected;
+                        if (hardware.JamDetected)
+                        {
+                            conveyorCtrl.CheckJam();
+                            Alarm.Raise("Conveyor Jammed!");
+                            await client.EmitAsync("alarm:new", new { message = "Conveyor Jammed!" });
+                        }
+                        else
+                        {
+                            conveyorCtrl.ClearJam();
+                        }
                     }
+                    if (key == ConsoleKey.E)
+                    {
+                        hardware.EStop = !hardware.EStop;
+                        if (hardware.EStop)
+                        {
+                            motorCtrl.Stop();
+                            EmergencyStop.Estop("E-STOP ACTIVATED");
+                            await client.EmitAsync("alarm:new", new { message = "E-STOP ACTIVATED" });
+                        }
+                    }
+                    if (key == ConsoleKey.S) conveyorCtrl.Start();
+                    if (key == ConsoleKey.X) conveyorCtrl.Stop();
                 }
 
-                // --- US-2.5 Environment Logic ---
-                // Read Temp
+                // B. Sprint 3 Environment Logic
                 double currentTemp = tempSensor.ReadTemperature();
-
-                // Update Fan
                 fan.UpdateTemperature(currentTemp);
 
-                // Display Status line (overwrites same line for cleanliness)
-                string fanStatus = fan.IsOn ? "[FAN: ON]" : "[FAN: OFF]";
-                string motorStatus = hardware.IsRunning ? "RUNNING" : "STOPPED";
+                // Collect Energy Sample
+                energySamples.Add(new EnergySample
+                {
+                    Temperature = currentTemp,
+                    FanOn = fan.IsOn,
+                    Timestamp = DateTime.Now
+                });
 
-                // If fan just turned on (simple edge detection for demo logging)
-                if (fan.IsOn && currentTemp > 30.0 && currentTemp < 30.5)
-                    Alarm.Raise($"High Temp Warning: {currentTemp}C");
+                // Keep sample list small
+                if (energySamples.Count > 100) energySamples.RemoveAt(0);
 
-                // Use \r to overwrite the status line at the bottom
-                // Format: Temp | Fan | Motor | Safety
-                Console.Write($"\r [ENV] {currentTemp:F1}C {fanStatus} | [CONVEYOR] {motorStatus} | Jam: {hardware.JamDetected} | EStop: {hardware.EStop}   ");
+                // Generate Real-time Report
+                var report = EnergyReporter.ComputeFromSamples(energySamples, 0.4);
 
-                // Wait 400ms (Approx 5 readings per 2 seconds)
-                Thread.Sleep(400);
+                // C. Send Unified Update to HMI
+                await client.EmitAsync("system:update", new
+                {
+                    conveyor = new
+                    {
+                        running = hardware.IsRunning,
+                        speed = 50
+                    },
+                    env = new
+                    {
+                        temp = currentTemp.ToString("F1"),
+                        fanOn = fan.IsOn,
+                        energyScore = report.EnergyScore
+                    }
+                });
+
+                // D. Console Status Line
+                Console.Write($"\r [ENV] {currentTemp:F1}C (Fan: {fan.IsOn}) Score: {report.EnergyScore:F0} | Motor: {hardware.IsRunning}   ");
+
+                await Task.Delay(400);
             }
+
+            await client.DisconnectAsync();
         }
     }
 }

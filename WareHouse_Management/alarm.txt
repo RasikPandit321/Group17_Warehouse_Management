@@ -1,0 +1,22 @@
+﻿[2025-12-03 22:02:48] Overweight package detected: ABC123
+[2025-12-03 22:02:53] High Temp Warning: 30.1C
+[2025-12-03 22:03:12] High Temp Warning: 30.1C
+[2025-12-03 22:03:24] High Temp Warning: 30.1C
+[2025-12-03 22:03:26] High Temp Warning: 30.3C
+[2025-12-03 22:03:46] High Temp Warning: 30.2C
+[2025-12-03 22:03:51] High Temp Warning: 30.3C
+[2025-12-03 22:04:44] High Temp Warning: 30.1C
+[2025-12-03 22:05:26] High Temp Warning: 30.2C
+[2025-12-03 22:05:46] High Temp Warning: 30.3C
+[2025-12-03 22:05:51] High Temp Warning: 30.1C
+[2025-12-03 22:05:58] High Temp Warning: 30.2C
+[2025-12-03 22:06:00] High Temp Warning: 30.4C
+[2025-12-03 22:06:49] High Temp Warning: 30.1C
+[2025-12-03 22:17:17] Overweight: ABC123
+[2025-12-03 22:17:20] Overweight: TEST456
+[2025-12-03 22:27:21] Overweight: ABC123
+[2025-12-03 22:30:17] Overweight: XYZ789
+[2025-12-03 22:39:47] Overweight: XYZ789
+[2025-12-03 22:53:33] Conveyor Jammed!
+[2025-12-03 22:53:46] Conveyor Jammed!
+[2025-12-03 22:53:59] E-STOP ACTIVATED
