@@ -1,27 +1,25 @@
-﻿namespace Warehouse
+﻿// Provides the baseline routing logic used for comparison and testing.
+// Implements the shared IRoutingEngine contract.
+namespace Warehouse
 {
-    /// <summary>
-    /// A non‑optimized implementation of IRoutingEngine,
-    /// identical to your original routing logic.
-    /// </summary>
-    public sealed class SimpleRoutingEngine : IRoutingEngine
+    public class SimpleRoutingEngine : IRoutingEngine
     {
         private const double OverweightLimit = 50.0;
 
         public Routing Route(string barcode, double weight)
         {
-            string lane;
-
+            // Block items exceeding the system's safety threshold.
             if (weight > OverweightLimit)
-                lane = "BLOCKED";
-            else if (weight < 5)
-                lane = "Lane1";
-            else if (weight < 10)
-                lane = "Lane2";
-            else
-                lane = "Lane3";
+                return new Routing(barcode, weight, "BLOCKED");
 
-            return new Routing(barcode, weight, lane);
+            // Light, medium, and heavy categories.
+            if (weight < 5)
+                return new Routing(barcode, weight, "Lane1");
+
+            if (weight < 10)
+                return new Routing(barcode, weight, "Lane2");
+
+            return new Routing(barcode, weight, "Lane3");
         }
     }
 }

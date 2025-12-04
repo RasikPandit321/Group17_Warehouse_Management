@@ -4,23 +4,32 @@ using System.Diagnostics;
 
 namespace Warehouse
 {
+    /// <summary>
+    /// Provides lightweight performance measurements for routing engines.
+    /// </summary>
     public static class RoutingPerformance
     {
-        public static TimeSpan Measure(IRoutingEngine engine, IEnumerable<(string barcode, double weight)> inputs)
+        public static TimeSpan Measure(IRoutingEngine engine, IEnumerable<(string, double)> items)
         {
-            Stopwatch sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew();
 
-            foreach (var (barcode, weight) in inputs)
+            foreach (var (barcode, weight) in items)
                 engine.Route(barcode, weight);
 
             sw.Stop();
             return sw.Elapsed;
         }
 
-        public static IEnumerable<(string, double)> Repeat(string barcode, double weight, int count)
+        /// <summary>
+        /// Generates repeated test inputs.
+        /// </summary>
+        public static List<(string, double)> Repeat(string barcode, double weight, int count)
         {
+            var list = new List<(string, double)>(count);
             for (int i = 0; i < count; i++)
-                yield return (barcode, weight);
+                list.Add((barcode, weight));
+
+            return list;
         }
     }
 }

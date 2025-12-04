@@ -35,7 +35,7 @@ namespace Warehouse.Tests
             Assert.IsNotNull(t);
         }
 
-        // 🔥 FIXED TEST BELOW
+        //  FIXED TEST BELOW
         [TestMethod]
         public void Measure_DifferentInputsReturnDifferentTimes()
         {

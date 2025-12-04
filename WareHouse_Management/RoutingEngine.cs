@@ -1,23 +1,29 @@
-﻿namespace Warehouse
+﻿using System;
+
+namespace Warehouse
 {
-    public class RoutingEngine : IRoutingEngine
+    /// <summary>
+    /// Default implementation of the routing logic.
+    /// </summary>
+    public sealed class RoutingEngine : IRoutingEngine
     {
         private const double OverweightLimit = 50.0;
 
+        /// <summary>
+        /// Determines the correct lane for a package based on its weight.
+        /// </summary>
         public Routing Route(string barcode, double weight)
         {
-            string lane;
-
             if (weight > OverweightLimit)
-                lane = "BLOCKED";
-            else if (weight < 5)
-                lane = "Lane1";
-            else if (weight < 10)
-                lane = "Lane2";
-            else
-                lane = "Lane3";
+                return new Routing(barcode, weight, "BLOCKED");
 
-            return new Routing(barcode, weight, lane);
+            if (weight < 5)
+                return new Routing(barcode, weight, "Lane1");
+
+            if (weight < 10)
+                return new Routing(barcode, weight, "Lane2");
+
+            return new Routing(barcode, weight, "Lane3");
         }
     }
 }
