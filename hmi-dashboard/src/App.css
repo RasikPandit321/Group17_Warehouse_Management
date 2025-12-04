@@ -310,3 +310,11 @@
         padding: 8px 16px;
         cursor: pointer;
     }
+
+/* Fix for Fan Status Layout Shift */
+.fan-box .value {
+    display: inline-block;
+    width: 100px; /* Reserve fixed space */
+    text-align: center; /* Keep text centered within that space */
+    white-space: nowrap; /* Prevent wrapping */
+}

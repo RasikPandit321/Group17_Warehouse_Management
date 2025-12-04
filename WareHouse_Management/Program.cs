@@ -12,8 +12,9 @@ namespace WareHouse_Management
 {
     internal class Program
     {
-        // Global reference to Socket client
         static SocketIOClient.SocketIO client = null!;
+
+        static int conveyorSpeed = 50;
 
         static async Task Main(string[] args)
         {
@@ -24,16 +25,12 @@ namespace WareHouse_Management
             // --- 1. SOCKET.IO SETUP ---
             client = new SocketIOClient.SocketIO("http://localhost:3001");
 
-            client.OnConnected += (sender, e) => {
+            client.OnConnected += (sender, e) =>
+            {
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("✅ Connected to HMI Dashboard!");
                 Console.ResetColor();
             };
-
-            // Listen for commands FROM the Dashboard
-            client.On("conveyor:start", response => {
-                Console.WriteLine(" [HMI CMD] Start Received");
-            });
 
             try
             {
@@ -45,21 +42,17 @@ namespace WareHouse_Management
             }
 
             // --- 2. SYSTEM SETUP ---
-            // Environment (Sprint 3)
             var tempSensor = new TemperatureSensor(20, 35);
             var fan = new FanController(30, 25);
-            var energySamples = new List<EnergySample>(); // Store samples for reporting
+            var energySamples = new List<EnergySample>();
 
-            // Conveyor & Safety
             var hardware = new SimulatedHardware();
             var motorCtrl = new MotorController(hardware, hardware);
             var conveyorCtrl = new ConveyorController(motorCtrl, hardware);
 
-            // Routing
             var routingEngine = new RoutingEngine();
             var diverter = new DiverterGateController();
 
-            // Ensure data file exists
             if (!System.IO.File.Exists("barcodes.txt"))
                 System.IO.File.WriteAllLines("barcodes.txt", new[] { "PKG-100", "PKG-500", "PKG-900" });
 
@@ -71,11 +64,19 @@ namespace WareHouse_Management
             // Handle HMI Commands
             client.On("conveyor:start", _ => conveyorCtrl.Start());
             client.On("conveyor:stop", _ => conveyorCtrl.Stop());
-            client.On("conveyor:speed", response => {
-                // Future: Handle speed changes here
+
+            // FIX 2: Update the conveyorSpeed variable when a command is received
+            client.On("conveyor:speed", response =>
+            {
+                try
+                {
+                    conveyorSpeed = response.GetValue<int>();
+                    Console.WriteLine($" [HMI CMD] Speed set to: {conveyorSpeed}");
+                }
+                catch { /* Ignore malformed data */ }
             });
 
-            // Routing Event Logic (Only define this ONCE)
+            // Routing Event Logic
             scanner.OnBarcodeScanned += async (barcode) =>
             {
                 double weight = random.NextDouble() * 59.0 + 1.0;
@@ -107,7 +108,7 @@ namespace WareHouse_Management
 
             Console.WriteLine("System Running. Press [Q] to Quit, [J] Jam, [E] E-Stop.");
 
-            // --- 4. MAIN SIMULATION LOOP (Required for Sprint 3 Logic) ---
+            // --- 4. MAIN SIMULATION LOOP (Heartbeat) ---
             while (true)
             {
                 // A. Handle Keyboard Input
@@ -144,11 +145,10 @@ namespace WareHouse_Management
                     if (key == ConsoleKey.X) conveyorCtrl.Stop();
                 }
 
-                // B. Sprint 3 Environment Logic
+                // B. Environment Logic
                 double currentTemp = tempSensor.ReadTemperature();
                 fan.UpdateTemperature(currentTemp);
 
-                // Collect Energy Sample
                 energySamples.Add(new EnergySample
                 {
                     Temperature = currentTemp,
@@ -156,11 +156,11 @@ namespace WareHouse_Management
                     Timestamp = DateTime.Now
                 });
 
-                // Keep sample list small
                 if (energySamples.Count > 100) energySamples.RemoveAt(0);
-
-                // Generate Real-time Report
                 var report = EnergyReporter.ComputeFromSamples(energySamples, 0.4);
+
+                // FIX: Determine the speed to send. If the conveyor is NOT running, speed MUST be 0.
+                int actualSpeed = hardware.IsRunning ? conveyorSpeed : 0;
 
                 // C. Send Unified Update to HMI
                 await client.EmitAsync("system:update", new
@@ -168,7 +168,7 @@ namespace WareHouse_Management
                     conveyor = new
                     {
                         running = hardware.IsRunning,
-                        speed = 50
+                        speed = actualSpeed // <-- Sends 0 when stopped
                     },
                     env = new
                     {
@@ -181,7 +181,7 @@ namespace WareHouse_Management
                 // D. Console Status Line
                 Console.Write($"\r [ENV] {currentTemp:F1}C (Fan: {fan.IsOn}) Score: {report.EnergyScore:F0} | Motor: {hardware.IsRunning}   ");
 
-                await Task.Delay(400);
+                await Task.Delay(4000);
             }
 
             await client.DisconnectAsync();
