@@ -60,8 +60,7 @@ namespace WareHouse_Management.Conveyor_and_Motor
             {
                 JamActive = false;
             }
-            // else: JAM STILL ACTIVE → do NOT clear
-        }
 
+        }
     }
 }

@@ -31,12 +31,9 @@ namespace AlarmService
             // while we have it open, but prevents other writers from opening it for write.
             using var fs = new FileStream(FilePath, mode, FileAccess.Write, FileShare.Read);
             using var sw = new StreamWriter(fs, Encoding.UTF8);
-            // Prepend a timestamp (customize format as needed)
+
             sw.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}");
-            if (OperatingSystem.IsWindows())
-            {
-                Console.Beep(450, 500);
-            }
+            Console.Beep(450, 500);
         }
 
         // Read all alarm lines; returns empty array if file does not exist
@@ -49,7 +46,7 @@ namespace AlarmService
         }
 
         // Return true if there are no alarms (no non-whitespace lines) in the file.
-        public bool NoAlarms()
+        public bool AnyAlarms()
         {
             if (!File.Exists(FilePath))
                 return true;
@@ -64,7 +61,7 @@ namespace AlarmService
             return true;
         }
 
-        // Print current alarms to the console. Prints a friendly message if none exist.
+        // Print current alarms to the console. Prints a message if none exist.
         public void PrintAllAlarms()
         {
             var lines = ReadAll();
@@ -98,7 +95,15 @@ namespace AlarmService
             EnsureDirectory();
             File.WriteAllLines(FilePath, filtered, Encoding.UTF8);
         }
+        public void ClearAlarms()
+        {
+            EnsureDirectory();
+            File.WriteAllText(FilePath, string.Empty, Encoding.UTF8);
+        }
 
+
+
+        // makes sure the file exists and creates it if it doesn't
         private void EnsureDirectory()
         {
             var dir = Path.GetDirectoryName(FilePath);
@@ -112,15 +117,11 @@ namespace AlarmService
     public static class Alarm
     {
         private static readonly Alarms _default = new Alarms();
-
         public static void Raise(string message) => _default.Raise(message);
-
         public static void Clear(string match) => _default.Clear(match);
-
         public static string[] ReadAll() => _default.ReadAll();
-
         public static void PrintAllAlarms() => _default.PrintAllAlarms();
-
-        public static bool NoAlarms() => _default.NoAlarms();
+        public static bool AnyAlarms() => _default.AnyAlarms();
+        public static void ClearAlarms() => _default.ClearAlarms();
     }
 }

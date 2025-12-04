@@ -1,17 +1,9 @@
-using System;
-
-namespace Warehouse
+﻿namespace Warehouse
 {
-    /// <summary>
-    /// Default implementation of the routing logic.
-    /// </summary>
-    public sealed class RoutingEngine : IRoutingEngine
+    public class OptimizedRoutingEngine : IRoutingEngine
     {
         private const double OverweightLimit = 50.0;
 
-        /// <summary>
-        /// Determines the correct lane for a package based on its weight.
-        /// </summary>
         public Routing Route(string barcode, double weight)
         {
             if (weight > OverweightLimit)

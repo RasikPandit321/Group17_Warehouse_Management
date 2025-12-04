@@ -13,7 +13,10 @@ public static class EmergencyStop
         // Call the static Raise method on the external class
         Raise(message);
         Log.Archive(message);
+
         // call conveyor stop
+
+
 
         return;
     }

@@ -1,22 +1,18 @@
-using System;
-
+﻿// Provides the baseline routing logic used for comparison and testing.
+// Implements the shared IRoutingEngine contract.
 namespace Warehouse
 {
-    /// <summary>
-    /// Default implementation of the routing logic.
-    /// </summary>
-    public sealed class RoutingEngine : IRoutingEngine
+    public class SimpleRoutingEngine : IRoutingEngine
     {
         private const double OverweightLimit = 50.0;
 
-        /// <summary>
-        /// Determines the correct lane for a package based on its weight.
-        /// </summary>
         public Routing Route(string barcode, double weight)
         {
+            // Block items exceeding the system's safety threshold.
             if (weight > OverweightLimit)
                 return new Routing(barcode, weight, "BLOCKED");
 
+            // Light, medium, and heavy categories.
             if (weight < 5)
                 return new Routing(barcode, weight, "Lane1");
 
