@@ -106,8 +106,8 @@ namespace WareHouse_Management
             // Start Scanner in background
             _ = Task.Run(() => scanner.StartScanning());
 
-            Console.WriteLine("System Running. Press [Q] to Quit, [J] Jam, [E] E-Stop.");
-
+            Console.WriteLine("System Running. Press [Q] to Quit, [J] Jam, [E] E-Stop, [R] Report.");
+            
             // --- 4. MAIN SIMULATION LOOP (Heartbeat) ---
             while (true)
             {
@@ -143,6 +143,13 @@ namespace WareHouse_Management
                     }
                     if (key == ConsoleKey.S) conveyorCtrl.Start();
                     if (key == ConsoleKey.X) conveyorCtrl.Stop();
+
+                    // Save energy report on R key
+                    if (key == ConsoleKey.R)
+                    {
+                        // 4.0 seconds because the loop uses Task.Delay(4000)
+                        await EnvironmentEnergyRunner.GenerateFromSamplesAsync(energySamples, 4.0);
+                    }
                 }
 
                 // B. Environment Logic
@@ -177,7 +184,8 @@ namespace WareHouse_Management
                         energyScore = report.EnergyScore
                     }
                 });
-
+                // DEBUG – Confirms GUI and console are using same temperature
+                Console.WriteLine($"\n[SENT TO GUI] Temperature = {currentTemp:F1} °C");
                 // D. Console Status Line
                 Console.Write($"\r [ENV] {currentTemp:F1}C (Fan: {fan.IsOn}) Score: {report.EnergyScore:F0} | Motor: {hardware.IsRunning}   ");
 
