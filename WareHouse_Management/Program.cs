@@ -13,8 +13,8 @@ namespace WareHouse_Management
     internal class Program
     {
         static SocketIOClient.SocketIO client = null!;
-
         static int conveyorSpeed = 50;
+        static double smoothedTemp = 20.0;
 
         static async Task Main(string[] args)
         {
@@ -53,43 +53,86 @@ namespace WareHouse_Management
             var routingEngine = new RoutingEngine();
             var diverter = new DiverterGateController();
 
+            // Create barcodes file if missing
             if (!System.IO.File.Exists("barcodes.txt"))
-                System.IO.File.WriteAllLines("barcodes.txt", new[] { "PKG-100", "PKG-500", "PKG-900" });
+            {
+                var mockData = new List<string>();
+                for (int i = 1; i <= 50; i++) mockData.Add($"PKG-{1000 + i}");
+                System.IO.File.WriteAllLines("barcodes.txt", mockData);
+            }
 
             var scanner = new BarcodeScannerSensor("barcodes.txt");
             var random = new Random();
 
-            // --- 3. WIRING EVENTS ---
+            // --- 3. HELPER FUNCTIONS ---
+            async void ToggleJam()
+            {
+                hardware.JamDetected = !hardware.JamDetected;
+                if (hardware.JamDetected)
+                {
+                    conveyorCtrl.CheckJam();
+                    Alarm.Raise("Conveyor Jammed!");
+                    await client.EmitAsync("alarm:new", new { message = "Conveyor Jammed!" });
+                }
+                else
+                {
+                    conveyorCtrl.ClearJam();
+                }
+            }
 
-            // Handle HMI Commands
+            async void ToggleEStop()
+            {
+                hardware.EStop = !hardware.EStop;
+                if (hardware.EStop)
+                {
+                    motorCtrl.Stop();
+                    EmergencyStop.Estop("E-STOP ACTIVATED");
+                    await client.EmitAsync("alarm:new", new { message = "E-STOP ACTIVATED" });
+                }
+            }
+
+            // --- 4. WIRING EVENTS ---
             client.On("conveyor:start", _ => conveyorCtrl.Start());
             client.On("conveyor:stop", _ => conveyorCtrl.Stop());
-
-            // FIX 2: Update the conveyorSpeed variable when a command is received
             client.On("conveyor:speed", response =>
             {
-                try
-                {
-                    conveyorSpeed = response.GetValue<int>();
-                    Console.WriteLine($" [HMI CMD] Speed set to: {conveyorSpeed}");
-                }
-                catch { /* Ignore malformed data */ }
+                try { conveyorSpeed = response.GetValue<int>(); } catch { }
             });
 
-            // Routing Event Logic
+            client.On("sim:jam", _ => ToggleJam());
+            client.On("sim:estop", _ => ToggleEStop());
+
+            client.On("request:report", async _ =>
+            {
+                string filename = await Task.Run(() =>
+                {
+                    var report = EnergyReporter.ComputeFromSamples(energySamples, 0.4);
+                    return EnergyReporter.SaveToCsv(report);
+                });
+                await client.EmitAsync("report:generated", new { filename = filename });
+                Console.WriteLine($"[REPORT] Generated: {filename}");
+            });
+
+            // --- UPDATED ROUTING LOGIC ---
             scanner.OnBarcodeScanned += async (barcode) =>
             {
+                // FIX: Stop processing packages if the conveyor is stopped
+                if (!hardware.IsRunning) return;
+
+                // Random weight 1.0kg to 60.0kg
                 double weight = random.NextDouble() * 59.0 + 1.0;
                 var route = routingEngine.Route(barcode, weight);
 
                 string logMsg = $"[ROUTING] {barcode} ({weight:F1}kg) -> {route.TargetLane}";
 
-                if (route.TargetLane == "BLOCKED")
+                // Handling for the 3 Lanes
+                if (route.TargetLane == "Lane3")
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(logMsg + " [REJECTED]");
-                    Alarm.Raise($"Overweight: {barcode}");
-                    await client.EmitAsync("alarm:new", new { message = $"Overweight Pkg: {barcode}" });
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine(logMsg + " [HEAVY]");
+                    // Notify HMI of heavy item, but don't stop the motor
+                    await client.EmitAsync("alarm:new", new { message = $"Heavy Item Sorted: {barcode}" });
+                    diverter.ActivateGate(route.TargetLane);
                 }
                 else
                 {
@@ -100,65 +143,41 @@ namespace WareHouse_Management
                 Console.ResetColor();
 
                 await client.EmitAsync("barcode:scanned", new { code = barcode });
-                await client.EmitAsync("diverter:activated", new { zone = route.TargetLane });
+
+                // Send BOTH 'zone' and 'code' so the UI knows what to display
+                await client.EmitAsync("diverter:activated", new
+                {
+                    zone = route.TargetLane,
+                    code = barcode
+                });
             };
 
-            // Start Scanner in background
+            // Start Scanner
             _ = Task.Run(() => scanner.StartScanning());
 
-            Console.WriteLine("System Running. Press [Q] to Quit, [J] Jam, [E] E-Stop, [R] Report.");
-            
-            // --- 4. MAIN SIMULATION LOOP (Heartbeat) ---
+            Console.WriteLine("System Running. Press [Q] to Quit, [J] Jam, [E] E-Stop.");
+
+            // --- 5. MAIN SIMULATION LOOP ---
             while (true)
             {
-                // A. Handle Keyboard Input
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true).Key;
                     if (key == ConsoleKey.Q) break;
-
-                    if (key == ConsoleKey.J)
-                    {
-                        hardware.JamDetected = !hardware.JamDetected;
-                        if (hardware.JamDetected)
-                        {
-                            conveyorCtrl.CheckJam();
-                            Alarm.Raise("Conveyor Jammed!");
-                            await client.EmitAsync("alarm:new", new { message = "Conveyor Jammed!" });
-                        }
-                        else
-                        {
-                            conveyorCtrl.ClearJam();
-                        }
-                    }
-                    if (key == ConsoleKey.E)
-                    {
-                        hardware.EStop = !hardware.EStop;
-                        if (hardware.EStop)
-                        {
-                            motorCtrl.Stop();
-                            EmergencyStop.Estop("E-STOP ACTIVATED");
-                            await client.EmitAsync("alarm:new", new { message = "E-STOP ACTIVATED" });
-                        }
-                    }
+                    if (key == ConsoleKey.J) ToggleJam();
+                    if (key == ConsoleKey.E) ToggleEStop();
                     if (key == ConsoleKey.S) conveyorCtrl.Start();
                     if (key == ConsoleKey.X) conveyorCtrl.Stop();
-
-                    // Save energy report on R key
-                    if (key == ConsoleKey.R)
-                    {
-                        // 4.0 seconds because the loop uses Task.Delay(4000)
-                        await EnvironmentEnergyRunner.GenerateFromSamplesAsync(energySamples, 4.0);
-                    }
                 }
 
-                // B. Environment Logic
-                double currentTemp = tempSensor.ReadTemperature();
-                fan.UpdateTemperature(currentTemp);
+                // Environment Logic
+                double rawTemp = tempSensor.ReadTemperature();
+                smoothedTemp = smoothedTemp + (rawTemp - smoothedTemp) * 0.05; // Smoothing
+                fan.UpdateTemperature(smoothedTemp);
 
                 energySamples.Add(new EnergySample
                 {
-                    Temperature = currentTemp,
+                    Temperature = smoothedTemp,
                     FanOn = fan.IsOn,
                     Timestamp = DateTime.Now
                 });
@@ -166,30 +185,18 @@ namespace WareHouse_Management
                 if (energySamples.Count > 100) energySamples.RemoveAt(0);
                 var report = EnergyReporter.ComputeFromSamples(energySamples, 0.4);
 
-                // FIX: Determine the speed to send. If the conveyor is NOT running, speed MUST be 0.
                 int actualSpeed = hardware.IsRunning ? conveyorSpeed : 0;
 
-                // C. Send Unified Update to HMI
+                // Send Updates
                 await client.EmitAsync("system:update", new
                 {
-                    conveyor = new
-                    {
-                        running = hardware.IsRunning,
-                        speed = actualSpeed // <-- Sends 0 when stopped
-                    },
-                    env = new
-                    {
-                        temp = currentTemp.ToString("F1"),
-                        fanOn = fan.IsOn,
-                        energyScore = report.EnergyScore
-                    }
+                    conveyor = new { running = hardware.IsRunning, speed = actualSpeed },
+                    env = new { temp = smoothedTemp.ToString("F1"), fanOn = fan.IsOn, energyScore = report.EnergyScore },
+                    flags = new { isJam = hardware.JamDetected, isEStop = hardware.EStop }
                 });
-                // DEBUG – Confirms GUI and console are using same temperature
-                Console.WriteLine($"\n[SENT TO GUI] Temperature = {currentTemp:F1} °C");
-                // D. Console Status Line
-                Console.Write($"\r [ENV] {currentTemp:F1}C (Fan: {fan.IsOn}) Score: {report.EnergyScore:F0} | Motor: {hardware.IsRunning}   ");
 
-                await Task.Delay(4000);
+                Console.Write($"\r [ENV] {smoothedTemp:F1}C (Fan: {fan.IsOn}) Score: {report.EnergyScore:F0} | Motor: {hardware.IsRunning}   ");
+                await Task.Delay(400);
             }
 
             await client.DisconnectAsync();

@@ -4,7 +4,7 @@ const http = require("http");
 const server = http.createServer();
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow connections from React (port 5173)
+        origin: "*", 
         methods: ["GET", "POST"]
     }
 });
@@ -12,47 +12,24 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
     console.log("✅ Client connected:", socket.id);
 
-    // --- SECTION 1: C# -> REACT (Data Flow) ---
+    // --- C# -> REACT ---
+    socket.on("system:update", (data) => io.emit("system:update", data));
+    socket.on("barcode:scanned", (data) => io.emit("barcode:scanned", data));
+    socket.on("diverter:activated", (data) => io.emit("diverter:activated", data));
+    socket.on("alarm:new", (data) => io.emit("alarm:new", data));
+    
+    // Relay Report Generated Confirmation
+    socket.on("report:generated", (data) => io.emit("report:generated", data));
 
-    // Relay System Status (Temp, Fan, Energy, Conveyor State)
-    socket.on("system:update", (data) => {
-        io.emit("system:update", data);
-    });
+    // --- REACT -> C# (Controls & Simulation) ---
+    socket.on("conveyor:start", () => io.emit("conveyor:start"));
+    socket.on("conveyor:stop", () => io.emit("conveyor:stop"));
+    socket.on("conveyor:speed", (val) => io.emit("conveyor:speed", val));
 
-    // Relay Barcode Scans
-    socket.on("barcode:scanned", (data) => {
-        io.emit("barcode:scanned", data);
-    });
-
-    // Relay Diverter/Routing Info
-    socket.on("diverter:activated", (data) => {
-        io.emit("diverter:activated", data);
-    });
-
-    // Relay Alarms
-    socket.on("alarm:new", (data) => {
-        io.emit("alarm:new", data);
-    });
-
-    // --- SECTION 2: REACT -> C# (Control Flow) ---
-
-    // Relay Start Command
-    socket.on("conveyor:start", () => {
-        console.log("▶️ Conveyor Start Requested");
-        io.emit("conveyor:start");
-    });
-
-    // Relay Stop Command
-    socket.on("conveyor:stop", () => {
-        console.log("⏹ Conveyor Stop Requested");
-        io.emit("conveyor:stop");
-    });
-
-    // Relay Speed Command
-    socket.on("conveyor:speed", (val) => {
-        console.log("⚙️ Speed set to", val);
-        io.emit("conveyor:speed", val);
-    });
+    // NEW: Simulation Commands
+    socket.on("sim:jam", () => io.emit("sim:jam"));
+    socket.on("sim:estop", () => io.emit("sim:estop"));
+    socket.on("request:report", () => io.emit("request:report"));
 });
 
 server.listen(3001, () => {

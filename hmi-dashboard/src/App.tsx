@@ -5,62 +5,63 @@ import {
 import { socket } from './socket';
 import './App.css';
 
-// --- Types ---
 interface Alarm {
     id: string;
     message: string;
     severity: 'High' | 'Medium' | 'Low';
     timestamp: number;
-    description?: string;
     recommended_action?: string;
 }
 
 function App() {
-    // --- State: Connection & Controls ---
     const [status, setStatus] = useState('Disconnected');
     const [conveyorRunning, setConveyorRunning] = useState(false);
     const [speed, setSpeed] = useState(50);
-
-    // --- State: Sprint 3 Environment ---
     const [temperature, setTemperature] = useState<number>(20);
     const [fanRunning, setFanRunning] = useState<boolean>(false);
     const [energyScore, setEnergyScore] = useState<number>(100);
-
-    // --- State: Routing & History ---
-    const [barcode, setBarcode] = useState<string>('--');
-    const [zone, setZone] = useState<string>('--');
     const [history, setHistory] = useState<{ time: string; speed: number; temp: number }[]>([]);
-
-    // --- State: Sprint 2 Alarms (Restored) ---
     const [alarms, setAlarms] = useState<Alarm[]>([]);
     const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
 
-    // --- Helpers ---
+    // NEW: Flags for Blocking logic
+    const [isJam, setIsJam] = useState(false);
+    const [isEStop, setIsEStop] = useState(false);
+
+    const [lanes, setLanes] = useState({
+        Lane1: null as string | null,
+        Lane2: null as string | null,
+        Lane3: null as string | null,
+    });
+
     const determineSeverity = (msg: string): 'High' | 'Medium' | 'Low' => {
         if (msg.toLowerCase().includes('stop') || msg.toLowerCase().includes('jam')) return 'High';
-        if (msg.toLowerCase().includes('overweight')) return 'Medium';
+        if (msg.toLowerCase().includes('heavy')) return 'Medium';
         return 'Low';
     };
 
     const getAction = (msg: string) => {
-        if (msg.toLowerCase().includes('jam')) return 'Clear physical obstruction and restart system.';
-        if (msg.toLowerCase().includes('stop')) return 'Release E-Stop button and verify safety.';
-        if (msg.toLowerCase().includes('overweight')) return 'Remove heavy package from rejection lane.';
-        return 'Monitor system closely.';
+        if (msg.toLowerCase().includes('jam')) return 'Clear obstruction & restart.';
+        if (msg.toLowerCase().includes('heavy')) return 'Verify Lane 3 Clearance.';
+        return 'Monitor system.';
     };
 
-    // --- Socket Listeners ---
     useEffect(() => {
         socket.on('connect', () => setStatus('Connected'));
         socket.on('disconnect', () => setStatus('Disconnected'));
 
-        // Sprint 3: Unified Update
         socket.on('system:update', (data) => {
             setConveyorRunning(data.conveyor.running);
             setSpeed(data.conveyor.speed);
             setTemperature(parseFloat(data.env.temp));
             setFanRunning(data.env.fanOn);
             setEnergyScore(data.env.energyScore);
+
+            // NEW: Receive flags
+            if (data.flags) {
+                setIsJam(data.flags.isJam);
+                setIsEStop(data.flags.isEStop);
+            }
 
             setHistory((prev) => [...prev, {
                 time: new Date().toLocaleTimeString(),
@@ -69,33 +70,47 @@ function App() {
             }].slice(-20));
         });
 
-        socket.on('barcode:scanned', ({ code }) => setBarcode(code));
-        socket.on('diverter:activated', ({ zone }) => setZone(zone));
+        socket.on('diverter:activated', ({ zone, code }) => {
+            setLanes(prev => ({ ...prev, [zone]: code }));
+            setTimeout(() => {
+                setLanes(prev => ({
+                    ...prev,
+                    [zone]: (prev[zone as keyof typeof prev] === code ? null : prev[zone as keyof typeof prev])
+                }));
+            }, 3000);
+        });
 
-        // Sprint 2 Logic Adapted for Sprint 3 Stream
         socket.on('alarm:new', ({ message }) => {
             const newAlarm: Alarm = {
                 id: Date.now().toString(),
                 message: message,
                 severity: determineSeverity(message),
                 timestamp: Date.now(),
-                description: `System detected event: ${message}`,
                 recommended_action: getAction(message)
             };
             setAlarms((prev) => [newAlarm, ...prev]);
+        });
+
+        // NEW: Handle Report Generation
+        socket.on('report:generated', ({ filename }) => {
+            alert(`✅ Energy Report Generated Successfully!\nFile saved as: ${filename}`);
         });
 
         return () => {
             socket.off('connect');
             socket.off('disconnect');
             socket.off('system:update');
-            socket.off('barcode:scanned');
             socket.off('diverter:activated');
             socket.off('alarm:new');
+            socket.off('report:generated');
         };
     }, []);
 
-    // --- Handlers ---
+    // Helper to request report
+    const generateReport = () => socket.emit("request:report");
+    const simulateJam = () => socket.emit("sim:jam");
+    const simulateEStop = () => socket.emit("sim:estop");
+
     const toggleConveyor = () => {
         const action = conveyorRunning ? 'conveyor:stop' : 'conveyor:start';
         socket.emit(action);
@@ -107,11 +122,13 @@ function App() {
         socket.emit('conveyor:speed', val);
     };
 
+    // Calculate blocked status string
+    const laneStatus = isEStop ? "⛔ E-STOP" : isJam ? "⚠️ JAMMED" : null;
+
     return (
         <div className="dashboard-container">
             <h1 id="dashboard-title">Smart Warehouse Dashboard</h1>
 
-            {/* Header Status Bar */}
             <div className="status-bar">
                 <span className={status === 'Connected' ? 'status-ok' : 'status-err'}>
                     Connection: {status}
@@ -122,7 +139,6 @@ function App() {
             </div>
 
             <div className="grid-layout">
-                {/* 1. Controls */}
                 <div className="controls-section">
                     <h2>⚙️ Controls</h2>
                     <div className="button-group">
@@ -137,9 +153,18 @@ function App() {
                         <label>Speed: {speed} RPM</label>
                         <input type="range" min="0" max="100" value={speed} onChange={handleSpeed} disabled={!conveyorRunning} />
                     </div>
+
+                    {/* NEW: Simulation Panel */}
+                    <div className="sim-controls">
+                        <h3>🛠️ Simulation & Reports</h3>
+                        <div className="sim-buttons">
+                            <button className="sim-btn jam" onClick={simulateJam}>Simulate Jam</button>
+                            <button className="sim-btn estop" onClick={simulateEStop}>Simulate E-Stop</button>
+                            <button className="sim-btn report" onClick={generateReport}>📄 Generate Report</button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* 2. Sprint 3: Environment Panel */}
                 <div className="env-panel">
                     <h2>🌱 Environment</h2>
                     <div className="metrics-row">
@@ -152,26 +177,39 @@ function App() {
                             <span className="value icon">{fanRunning ? '🌀 ON' : '⚫ OFF'}</span>
                         </div>
                         <div className="metric-box">
-                            <span className="label">Energy Score</span>
+                            <span className="label">Energy</span>
                             <div className="progress-bar">
                                 <div className="fill" style={{ width: `${energyScore}%`, backgroundColor: energyScore > 80 ? '#4caf50' : '#f44336' }}></div>
                             </div>
-                            <span className="score-text">{energyScore.toFixed(0)}/100</span>
+                            <span className="score-text">{energyScore.toFixed(0)}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Routing Panel */}
-                <div className="routing-panel">
-                    <h2>📦 Live Routing</h2>
-                    <div className="routing-display">
-                        <span className="barcode">{barcode}</span>
-                        <span className="arrow">➜</span>
-                        <span className={`zone-badge ${zone === 'BLOCKED' ? 'blocked' : ''}`}>{zone}</span>
+                <div className="routing-panel full-width">
+                    <h2>📦 Live Lane Tracking</h2>
+                    <div className="lanes-container">
+                        <div className="lane-box">
+                            <h3>Lane 1 (Express)</h3>
+                            <div className={`package-slot ${laneStatus ? 'blocked-lane' : (lanes.Lane1 ? 'occupied' : '')}`}>
+                                {laneStatus || lanes.Lane1 || "Empty"}
+                            </div>
+                        </div>
+                        <div className="lane-box">
+                            <h3>Lane 2 (Standard)</h3>
+                            <div className={`package-slot ${laneStatus ? 'blocked-lane' : (lanes.Lane2 ? 'occupied' : '')}`}>
+                                {laneStatus || lanes.Lane2 || "Empty"}
+                            </div>
+                        </div>
+                        <div className="lane-box heavy">
+                            <h3>Lane 3 (Heavy)</h3>
+                            <div className={`package-slot ${laneStatus ? 'blocked-lane' : (lanes.Lane3 ? 'occupied' : '')}`}>
+                                {laneStatus || lanes.Lane3 || "Empty"}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* 4. Charts */}
                 <div className="chart-panel">
                     <h2>Trend Analysis</h2>
                     <ResponsiveContainer width="100%" height={200}>
@@ -180,42 +218,35 @@ function App() {
                             <XAxis dataKey="time" stroke="#888" fontSize={10} />
                             <YAxis stroke="#888" fontSize={10} />
                             <Tooltip contentStyle={{ backgroundColor: '#333' }} />
-                            <ReferenceLine y={30} stroke="red" strokeDasharray="3 3" />
                             <Line type="monotone" dataKey="speed" stroke="#8884d8" dot={false} strokeWidth={2} />
                             <Line type="monotone" dataKey="temp" stroke="#82ca9d" dot={false} strokeWidth={2} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
 
-                {/* 5. Sprint 2: Interactive Alarm Panel */}
                 <div className="alarm-panel full-width">
                     <div className="alarm-header">
                         <h2>⚠️ Active Alarms</h2>
                         <span className="alarm-count">{alarms.length}</span>
                     </div>
-                    {alarms.length === 0 ? (
-                        <div className="no-alarms">No active alarms. System normal.</div>
-                    ) : (
-                        <ul className="alarm-list">
-                            {alarms.map((alarm) => (
-                                <li
-                                    key={alarm.id}
-                                    className={`alarm-item ${alarm.severity.toLowerCase()} clickable`}
-                                    onClick={() => setSelectedAlarm(alarm)}
-                                >
-                                    <div className="alarm-info">
-                                        <span className="alarm-time">{new Date(alarm.timestamp).toLocaleTimeString()}</span>
-                                        <span className="alarm-severity">{alarm.severity}</span>
-                                    </div>
-                                    <div className="alarm-message">{alarm.message}</div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                    <ul className="alarm-list">
+                        {alarms.map((alarm) => (
+                            <li
+                                key={alarm.id}
+                                className={`alarm-item ${alarm.severity.toLowerCase()} clickable`}
+                                onClick={() => setSelectedAlarm(alarm)}
+                            >
+                                <div className="alarm-info">
+                                    <span className="alarm-time">{new Date(alarm.timestamp).toLocaleTimeString()}</span>
+                                    <span className="alarm-severity">{alarm.severity}</span>
+                                </div>
+                                <div className="alarm-message">{alarm.message}</div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             </div>
 
-            {/* Sprint 2: Modal */}
             {selectedAlarm && (
                 <div className="modal-backdrop" onClick={() => setSelectedAlarm(null)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -225,14 +256,7 @@ function App() {
                         </div>
                         <div className="modal-body">
                             <h4>{selectedAlarm.message}</h4>
-                            <p><strong>Time:</strong> {new Date(selectedAlarm.timestamp).toLocaleString()}</p>
-                            <div className="detail-section">
-                                <h5>Recommended Action:</h5>
-                                <p>{selectedAlarm.recommended_action}</p>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button onClick={() => setSelectedAlarm(null)}>Acknowledge</button>
+                            <p><strong>Action:</strong> {selectedAlarm.recommended_action}</p>
                         </div>
                     </div>
                 </div>

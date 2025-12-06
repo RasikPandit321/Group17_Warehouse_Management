@@ -1,4 +1,4 @@
-#root {
+﻿#root {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
@@ -311,10 +311,185 @@
         cursor: pointer;
     }
 
-/* Fix for Fan Status Layout Shift */
+
 .fan-box .value {
     display: inline-block;
     width: 100px; /* Reserve fixed space */
     text-align: center; /* Keep text centered within that space */
     white-space: nowrap; /* Prevent wrapping */
+}
+
+/* ... existing styles ... */
+
+/* NEW: 3-Lane Styles */
+.lanes-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 10px 0;
+}
+
+.lane-box {
+    flex: 1;
+    background: #333;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    border: 2px solid #444;
+}
+
+    .lane-box h3 {
+        margin: 0 0 10px 0;
+        font-size: 0.9em;
+        color: #aaa;
+    }
+
+    .lane-box.heavy {
+        border-color: #ffbb33; /* Highlights the Heavy lane */
+    }
+
+.package-slot {
+    height: 50px;
+    background: #222;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    color: #555;
+    transition: all 0.3s ease;
+}
+
+    /* When a package is present */
+    .package-slot.occupied {
+        background: #2196f3;
+        color: white;
+        font-weight: bold;
+        font-size: 1.1em;
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+        transform: scale(1.05);
+    }
+
+.lane-box.heavy .package-slot.occupied {
+    background: #ffbb33;
+    color: black;
+    box-shadow: 0 0 15px rgba(255, 187, 51, 0.5);
+}
+
+/* --- UI STABILITY FIXES --- */
+
+/* 1. Prevent Number Jitter */
+/* This makes all numbers take up equal space (like a typewriter) */
+.value, .score-text, .alarm-time {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
+/* 2. Fix Temperature & Fan Box Width */
+/* Reserves consistent space regardless of value length */
+.metric-box .value {
+    display: inline-block;
+    width: 120px; /* Wide enough for "100.0°C" or "🌀 ON" */
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 3. Fix Energy Score Width */
+.score-text {
+    display: inline-block;
+    width: 50px; /* Fixed width for score "100" */
+    text-align: right;
+}
+
+/* 4. Fix Routing Panel Jitter */
+.barcode {
+    display: inline-block;
+    width: 140px; /* Fixed space for barcode text */
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.zone-badge {
+    display: inline-block;
+    width: 110px; /* Fixed space for "Lane 3" */
+    text-align: center;
+}
+
+/* 5. Ensure Metric Boxes don't shrink unevenly */
+.metric-box {
+    min-width: 140px; /* Prevents the box itself from collapsing */
+}
+
+/* Simulation Controls */
+.sim-controls {
+    margin-top: 20px;
+    border-top: 1px solid #444;
+    padding-top: 15px;
+}
+
+    .sim-controls h3 {
+        font-size: 0.9em;
+        color: #888;
+        margin-bottom: 10px;
+    }
+
+.sim-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.sim-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: filter 0.2s;
+}
+
+    .sim-btn:hover {
+        filter: brightness(1.1);
+    }
+
+    .sim-btn.jam {
+        background-color: #ff9800;
+        color: #000;
+    }
+
+    .sim-btn.estop {
+        background-color: #f44336;
+        color: #fff;
+    }
+
+    .sim-btn.report {
+        background-color: #2196f3;
+        color: #fff;
+    }
+
+/* Blocked Lane Style */
+.package-slot.blocked-lane {
+    background-color: #d32f2f; /* Red */
+    color: white;
+    border: 2px dashed white;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
