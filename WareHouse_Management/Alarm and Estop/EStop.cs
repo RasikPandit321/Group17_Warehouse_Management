@@ -14,10 +14,6 @@ public static class EmergencyStop
         Raise(message);
         Log.Archive(message);
 
-        // call conveyor stop
-
-
-
         return;
     }
 }
