@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import {
-    LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine
+    LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer
 } from 'recharts';
 import { socket } from './socket';
 import './App.css';
@@ -24,15 +24,10 @@ function App() {
     const [alarms, setAlarms] = useState<Alarm[]>([]);
     const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
 
-    // NEW: Flags for Blocking logic
+    // ... (Keep existing state & helpers: isJam, isEStop, Lanes, severity logic) ...
     const [isJam, setIsJam] = useState(false);
     const [isEStop, setIsEStop] = useState(false);
-
-    const [lanes, setLanes] = useState({
-        Lane1: null as string | null,
-        Lane2: null as string | null,
-        Lane3: null as string | null,
-    });
+    const [lanes, setLanes] = useState({ Lane1: null as string | null, Lane2: null as string | null, Lane3: null as string | null });
 
     const determineSeverity = (msg: string): 'High' | 'Medium' | 'Low' => {
         if (msg.toLowerCase().includes('stop') || msg.toLowerCase().includes('jam')) return 'High';
@@ -46,6 +41,16 @@ function App() {
         return 'Monitor system.';
     };
 
+    // --- NEW: Acknowledge Function ---
+    const acknowledgeAlarm = () => {
+        if (selectedAlarm) {
+            // Remove the selected alarm from the list
+            setAlarms((prev) => prev.filter(a => a.id !== selectedAlarm.id));
+            // Close the modal
+            setSelectedAlarm(null);
+        }
+    };
+
     useEffect(() => {
         socket.on('connect', () => setStatus('Connected'));
         socket.on('disconnect', () => setStatus('Disconnected'));
@@ -56,13 +61,10 @@ function App() {
             setTemperature(parseFloat(data.env.temp));
             setFanRunning(data.env.fanOn);
             setEnergyScore(data.env.energyScore);
-
-            // NEW: Receive flags
             if (data.flags) {
                 setIsJam(data.flags.isJam);
                 setIsEStop(data.flags.isEStop);
             }
-
             setHistory((prev) => [...prev, {
                 time: new Date().toLocaleTimeString(),
                 speed: data.conveyor.speed,
@@ -91,7 +93,6 @@ function App() {
             setAlarms((prev) => [newAlarm, ...prev]);
         });
 
-        // NEW: Handle Report Generation
         socket.on('report:generated', ({ filename }) => {
             alert(`✅ Energy Report Generated Successfully!\nFile saved as: ${filename}`);
         });
@@ -106,7 +107,6 @@ function App() {
         };
     }, []);
 
-    // Helper to request report
     const generateReport = () => socket.emit("request:report");
     const simulateJam = () => socket.emit("sim:jam");
     const simulateEStop = () => socket.emit("sim:estop");
@@ -122,7 +122,6 @@ function App() {
         socket.emit('conveyor:speed', val);
     };
 
-    // Calculate blocked status string
     const laneStatus = isEStop ? "⛔ E-STOP" : isJam ? "⚠️ JAMMED" : null;
 
     return (
@@ -139,13 +138,11 @@ function App() {
             </div>
 
             <div className="grid-layout">
+                {/* Controls & Sim */}
                 <div className="controls-section">
                     <h2>⚙️ Controls</h2>
                     <div className="button-group">
-                        <button
-                            className={conveyorRunning ? 'stop-btn' : 'start-btn'}
-                            onClick={toggleConveyor}
-                        >
+                        <button className={conveyorRunning ? 'stop-btn' : 'start-btn'} onClick={toggleConveyor}>
                             {conveyorRunning ? 'STOP' : 'START'}
                         </button>
                     </div>
@@ -153,8 +150,6 @@ function App() {
                         <label>Speed: {speed} RPM</label>
                         <input type="range" min="0" max="100" value={speed} onChange={handleSpeed} disabled={!conveyorRunning} />
                     </div>
-
-                    {/* NEW: Simulation Panel */}
                     <div className="sim-controls">
                         <h3>🛠️ Simulation & Reports</h3>
                         <div className="sim-buttons">
@@ -165,6 +160,7 @@ function App() {
                     </div>
                 </div>
 
+                {/* Env Panel */}
                 <div className="env-panel">
                     <h2>🌱 Environment</h2>
                     <div className="metrics-row">
@@ -186,6 +182,7 @@ function App() {
                     </div>
                 </div>
 
+                {/* Lanes */}
                 <div className="routing-panel full-width">
                     <h2>📦 Live Lane Tracking</h2>
                     <div className="lanes-container">
@@ -210,6 +207,7 @@ function App() {
                     </div>
                 </div>
 
+                {/* Chart */}
                 <div className="chart-panel">
                     <h2>Trend Analysis</h2>
                     <ResponsiveContainer width="100%" height={200}>
@@ -224,6 +222,7 @@ function App() {
                     </ResponsiveContainer>
                 </div>
 
+                {/* Alarm List */}
                 <div className="alarm-panel full-width">
                     <div className="alarm-header">
                         <h2>⚠️ Active Alarms</h2>
@@ -247,6 +246,7 @@ function App() {
                 </div>
             </div>
 
+            {/* UPDATE: Modal with Acknowledge Button */}
             {selectedAlarm && (
                 <div className="modal-backdrop" onClick={() => setSelectedAlarm(null)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -257,6 +257,19 @@ function App() {
                         <div className="modal-body">
                             <h4>{selectedAlarm.message}</h4>
                             <p><strong>Action:</strong> {selectedAlarm.recommended_action}</p>
+                        </div>
+                        <div className="modal-footer">
+                            <button style={{
+                                backgroundColor: '#4caf50',
+                                color: 'white',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                            }} onClick={acknowledgeAlarm}>
+                                ✅ Acknowledge
+                            </button>
                         </div>
                     </div>
                 </div>

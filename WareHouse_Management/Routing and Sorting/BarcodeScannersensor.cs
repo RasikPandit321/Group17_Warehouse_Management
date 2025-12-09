@@ -30,7 +30,8 @@ namespace WareHouse_Management
                     Console.WriteLine($"Scanned: {barcode} at {DateTime.Now:T}");
                     OnBarcodeScanned?.Invoke(barcode);
                 }
-                System.Threading.Thread.Sleep(1000);
+                // UPDATE: Reduced delay to 500ms to keep lanes full
+                System.Threading.Thread.Sleep(500);
             }
         }
     }

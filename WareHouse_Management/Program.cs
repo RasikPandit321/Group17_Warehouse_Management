@@ -158,6 +158,8 @@ namespace WareHouse_Management
             Console.WriteLine("System Running. Press [Q] to Quit, [J] Jam, [E] E-Stop.");
 
             // --- 5. MAIN SIMULATION LOOP ---
+            DateTime startTime = DateTime.Now; // Track start time for the demo wave
+
             while (true)
             {
                 if (Console.KeyAvailable)
@@ -170,9 +172,14 @@ namespace WareHouse_Management
                     if (key == ConsoleKey.X) conveyorCtrl.Stop();
                 }
 
-                // Environment Logic
-                double rawTemp = tempSensor.ReadTemperature();
-                smoothedTemp = smoothedTemp + (rawTemp - smoothedTemp) * 0.05; // Smoothing
+                // --- DEMO TEMPERATURE LOGIC ---
+                // Calculate seconds running
+                double t = (DateTime.Now - startTime).TotalSeconds;
+
+                // Create a wave that goes from 20C to 35C every ~15 seconds
+                // Thresholds: Fan ON at 30, OFF at 25
+                smoothedTemp = 27.5 + 8.0 * Math.Sin(t * 0.4);
+
                 fan.UpdateTemperature(smoothedTemp);
 
                 energySamples.Add(new EnergySample
