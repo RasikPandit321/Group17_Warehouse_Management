@@ -1,0 +1,538 @@
+﻿#root {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    text-align: center;
+    background-color: #1a1a1a; /* Main dark background */
+    color: #e0e0e0; /* Default text color */
+    min-height: 100vh; /* Full screen height */
+}
+
+/* --- Layout --- */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between sections */
+}
+
+.grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2-column layout */
+    gap: 20px;
+}
+
+/* Panels */
+.controls-section, .env-panel, .routing-panel, .chart-panel, .alarm-panel {
+    background: #2a2a2a; /* Panel background */
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3); /* Soft shadow */
+    text-align: left;
+}
+
+.full-width {
+    grid-column: span 2; /* Makes a panel stretch across both columns */
+}
+
+/* Status Bar */
+.status-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    background-color: #333;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.status-ok {
+    color: #4caf50;
+}
+/* Good status (Green) */
+.status-err {
+    color: #f44336;
+}
+/* Error (Red) */
+.status-running {
+    color: #4caf50;
+}
+/* Motor running */
+.status-stopped {
+    color: #ff9800;
+}
+/* Motor stopped */
+
+/* Controls */
+.start-btn {
+    background-color: #2e7d32; /* Green start */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1.1em;
+}
+
+.stop-btn {
+    background-color: #d32f2f; /* Red stop */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1.1em;
+}
+
+.slider-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Environment Metrics (Sprint 3) */
+.metrics-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.metric-box {
+    background: #333;
+    padding: 10px;
+    border-radius: 8px;
+    flex: 1;
+    text-align: center;
+}
+
+    /* Visual warning border */
+    .metric-box.warning {
+        border: 1px solid #ff9800;
+        color: #ff9800;
+    }
+
+.fan-box.active {
+    color: #2196f3; /* Blue highlight for active fan */
+}
+
+/* Progress bar styling */
+.progress-bar {
+    background: #444;
+    height: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    transition: width 0.5s; /* Smooth fill animation */
+}
+
+/* Routing Display */
+.routing-display {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 1.2em;
+}
+
+.barcode {
+    font-family: monospace;
+    background: #444;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+/* Zone badge color coding */
+.zone-badge {
+    background: #2196f3;
+    padding: 5px 15px;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+}
+
+    .zone-badge.blocked {
+        background: #d32f2f; /* Red when blocked */
+    }
+
+/* --- Alarm Panel (Sprint 2 Restored) --- */
+
+.alarm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #555;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+}
+
+.alarm-count {
+    background: #444;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+}
+
+.alarm-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 250px; /* Scrollable list */
+    overflow-y: auto;
+}
+
+.alarm-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: #333;
+    border-radius: 6px;
+    border-left: 5px solid transparent; /* Color-coded by severity */
+    transition: transform 0.2s;
+}
+
+    /* Clickable alarm items */
+    .alarm-item.clickable {
+        cursor: pointer;
+    }
+
+        .alarm-item.clickable:hover {
+            transform: translateX(5px);
+            filter: brightness(1.2);
+        }
+
+    /* Severity colors */
+    .alarm-item.high {
+        border-left-color: #ff4444;
+        background-color: rgba(255, 68, 68, 0.1);
+    }
+
+        .alarm-item.high .alarm-severity {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+    .alarm-item.medium {
+        border-left-color: #ffbb33;
+        background-color: rgba(255, 187, 51, 0.1);
+    }
+
+        .alarm-item.medium .alarm-severity {
+            color: #ffbb33;
+            font-weight: bold;
+        }
+
+    .alarm-item.low {
+        border-left-color: #33b5e5;
+        background-color: rgba(51, 181, 229, 0.1);
+    }
+
+        .alarm-item.low .alarm-severity {
+            color: #33b5e5;
+            font-weight: bold;
+        }
+
+.alarm-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8em;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+/* --- Modal Window --- */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Always top */
+}
+
+.modal-content {
+    background-color: #2a2a2a;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+    text-align: left;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* Modal header color matches severity */
+.modal-header {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    color: white;
+}
+
+    .modal-header.high {
+        background-color: #d32f2f;
+    }
+
+    .modal-header.medium {
+        background-color: #ff9800;
+        color: black;
+    }
+
+    .modal-header.low {
+        background-color: #0288d1;
+    }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: inherit;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.detail-section {
+    background: #333;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.modal-footer {
+    padding: 15px;
+    text-align: right;
+    border-top: 1px solid #444;
+}
+
+    .modal-footer button {
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+
+/* Fan value alignment */
+.fan-box .value {
+    display: inline-block;
+    width: 100px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* --- Lane System --- */
+.lanes-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 10px 0;
+}
+
+.lane-box {
+    flex: 1;
+    background: #333;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    border: 2px solid #444;
+}
+
+    .lane-box h3 {
+        margin: 0 0 10px 0;
+        font-size: 0.9em;
+        color: #aaa;
+    }
+
+    /* Heavy lane special highlight */
+    .lane-box.heavy {
+        border-color: #ffbb33;
+    }
+
+/* Package slot styling */
+.package-slot {
+    height: 50px;
+    background: #222;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    color: #555;
+    transition: all 0.3s ease; /* Smooth animation */
+}
+
+    /* When a package exists */
+    .package-slot.occupied {
+        background: #2196f3;
+        color: white;
+        font-weight: bold;
+        font-size: 1.1em;
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+        transform: scale(1.05);
+    }
+
+/* Heavy lane occupied override */
+.lane-box.heavy .package-slot.occupied {
+    background: #ffbb33;
+    color: black;
+    box-shadow: 0 0 15px rgba(255, 187, 51, 0.5);
+}
+
+/* --- UI Stability Fixes --- */
+
+/* Equal-width numbers (prevents jitter) */
+.value, .score-text, .alarm-time {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
+/* Consistent metric value width */
+.metric-box .value {
+    display: inline-block;
+    width: 120px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Energy score fixed width */
+.score-text {
+    display: inline-block;
+    width: 50px;
+    text-align: right;
+}
+
+/* Prevent barcode jitter */
+.barcode {
+    display: inline-block;
+    width: 140px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Zone badge fixed width */
+.zone-badge {
+    display: inline-block;
+    width: 110px;
+    text-align: center;
+}
+
+/* Prevent metric box shrinking */
+.metric-box {
+    min-width: 140px;
+}
+
+/* Simulation controls */
+.sim-controls {
+    margin-top: 20px;
+    border-top: 1px solid #444;
+    padding-top: 15px;
+}
+
+    .sim-controls h3 {
+        font-size: 0.9em;
+        color: #888;
+        margin-bottom: 10px;
+    }
+
+.sim-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Sim UI buttons */
+.sim-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: filter 0.2s;
+}
+
+    .sim-btn:hover {
+        filter: brightness(1.1);
+    }
+
+    /* Button severity colors */
+    .sim-btn.jam {
+        background-color: #ff9800;
+        color: #000;
+    }
+
+    .sim-btn.estop {
+        background-color: #f44336;
+        color: #fff;
+    }
+
+    .sim-btn.report {
+        background-color: #2196f3;
+        color: #fff;
+    }
+
+/* Blocked lane indicator */
+.package-slot.blocked-lane {
+    background-color: #d32f2f;
+    color: white;
+    border: 2px dashed white;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+/* Pulse animation */
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Lane color overrides */
+.lane-box.express {
+    border-color: #4caf50; /* Green lane */
+}
+
+    .lane-box.express .package-slot.occupied {
+        background: #4caf50;
+        color: white;
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    }
+
+.lane-box.standard {
+    border-color: #2196f3; /* Blue lane */
+}
+
+    .lane-box.standard .package-slot.occupied {
+        background: #2196f3;
+        color: white;
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+    }
+
+/* Heavy lane — repeated intentionally to ensure override */
+.lane-box.heavy {
+    border-color: #ffbb33;
+}
+
+    .lane-box.heavy .package-slot.occupied {
+        background: #ffbb33;
+        color: black;
+        box-shadow: 0 0 15px rgba(255, 187, 51, 0.5);
+    }

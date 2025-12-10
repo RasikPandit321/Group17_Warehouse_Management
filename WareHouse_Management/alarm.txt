@@ -1,0 +1,76 @@
+﻿[2025-12-03 22:02:48] Overweight package detected: ABC123
+[2025-12-03 22:02:53] High Temp Warning: 30.1C
+[2025-12-03 22:03:12] High Temp Warning: 30.1C
+[2025-12-03 22:03:24] High Temp Warning: 30.1C
+[2025-12-03 22:03:26] High Temp Warning: 30.3C
+[2025-12-03 22:03:46] High Temp Warning: 30.2C
+[2025-12-03 22:03:51] High Temp Warning: 30.3C
+[2025-12-03 22:04:44] High Temp Warning: 30.1C
+[2025-12-03 22:05:26] High Temp Warning: 30.2C
+[2025-12-03 22:05:46] High Temp Warning: 30.3C
+[2025-12-03 22:05:51] High Temp Warning: 30.1C
+[2025-12-03 22:05:58] High Temp Warning: 30.2C
+[2025-12-03 22:06:00] High Temp Warning: 30.4C
+[2025-12-03 22:06:49] High Temp Warning: 30.1C
+[2025-12-03 22:17:17] Overweight: ABC123
+[2025-12-03 22:17:20] Overweight: TEST456
+[2025-12-03 22:27:21] Overweight: ABC123
+[2025-12-03 22:30:17] Overweight: XYZ789
+[2025-12-03 22:39:47] Overweight: XYZ789
+[2025-12-03 22:53:33] Conveyor Jammed!
+[2025-12-03 22:53:46] Conveyor Jammed!
+[2025-12-03 22:53:59] E-STOP ACTIVATED
+[2025-12-03 23:00:20] Conveyor Jammed!
+[2025-12-03 23:00:31] Conveyor Jammed!
+[2025-12-03 23:00:35] E-STOP ACTIVATED
+[2025-12-03 23:01:00] Conveyor Jammed!
+[2025-12-03 23:02:04] E-STOP ACTIVATED
+[2025-12-04 11:17:15] Conveyor Jammed!
+[2025-12-04 11:17:30] Conveyor Jammed!
+[2025-12-04 11:25:36] Overweight: TEST456
+[2025-12-04 12:01:04] Overweight: ABC123
+[2025-12-04 12:18:36] Conveyor Jammed!
+[2025-12-04 12:19:13] Conveyor Jammed!
+[2025-12-04 12:19:37] E-STOP ACTIVATED
+[2025-12-04 12:22:00] Conveyor Jammed!
+[2025-12-04 12:22:48] E-STOP ACTIVATED
+[2025-12-04 12:58:05] Overweight: ABC123
+[2025-12-04 15:48:29] Overweight: TEST456
+[2025-12-04 15:58:50] Conveyor Jammed!
+[2025-12-04 15:59:10] Conveyor Jammed!
+[2025-12-04 16:04:36] Overweight: ABC123
+[2025-12-04 16:04:37] Overweight: XYZ789
+[2025-12-04 16:05:34] Conveyor Jammed!
+[2025-12-06 08:35:17] Overweight: TEST456
+[2025-12-06 08:43:46] Conveyor Jammed!
+[2025-12-06 09:11:39] E-STOP ACTIVATED
+[2025-12-06 09:32:20] E-STOP ACTIVATED
+[2025-12-06 09:32:22] Conveyor Jammed!
+[2025-12-06 09:38:04] E-STOP ACTIVATED
+[2025-12-06 09:38:21] E-STOP ACTIVATED
+[2025-12-06 09:38:36] Conveyor Jammed!
+[2025-12-06 09:43:13] E-STOP ACTIVATED
+[2025-12-06 09:46:35] E-STOP ACTIVATED
+[2025-12-06 10:00:49] Conveyor Jammed!
+[2025-12-06 10:05:20] E-STOP ACTIVATED
+[2025-12-06 10:07:15] Conveyor Jammed!
+[2025-12-06 10:08:02] Conveyor Jammed!
+[2025-12-06 10:08:47] Conveyor Jammed!
+[2025-12-06 10:15:10] E-STOP ACTIVATED
+[2025-12-06 22:34:29] Conveyor Jammed!
+[2025-12-06 22:35:08] E-STOP ACTIVATED
+[2025-12-06 22:35:14] E-STOP ACTIVATED
+[12/9/2025 7:37:03 PM] ALARM: Conveyor Jammed
+[12/9/2025 7:37:04 PM] ALARM: Conveyor Jammed!
+[12/9/2025 7:57:28 PM] ALARM: Conveyor Jammed
+[12/9/2025 7:57:29 PM] ALARM: Conveyor Jammed!
+[12/9/2025 8:25:34 PM] ALARM: Conveyor Jammed
+[12/9/2025 8:25:35 PM] ALARM: Conveyor Jammed!
+[12/9/2025 8:26:25 PM] ALARM: Conveyor Jammed
+[12/9/2025 8:26:26 PM] ALARM: Conveyor Jammed!
+[12/9/2025 8:40:03 PM] ALARM: E-STOP ACTIVATED
+[12/9/2025 8:40:06 PM] ALARM: Conveyor Jammed
+[12/9/2025 8:40:07 PM] ALARM: Conveyor Jammed!
+[12/9/2025 9:46:08 PM] ALARM: E-STOP ACTIVATED
+[12/9/2025 9:46:10 PM] ALARM: Conveyor Jammed
+[12/9/2025 9:46:11 PM] ALARM: Conveyor Jammed!
