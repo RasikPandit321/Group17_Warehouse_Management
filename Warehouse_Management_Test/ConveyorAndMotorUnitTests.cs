@@ -4,14 +4,22 @@ using WareHouse_Management.Conveyor_and_Motor;
 
 namespace Warehouse_Management_Test
 {
+    /// <summary>
+    /// Unit tests for verifying the behavior of the MotorController,
+    /// ConveyorController, and simulated hardware interactions.
+    /// </summary>
     [TestClass]
     public class ConveyorAndMotorUnitTests
     {
-        // FIX: Use null! to satisfy CS8618
+        // Use null! to avoid nullable warnings; actual instances are created in Setup().
         private SimulatedHardware _hw = null!;
         private MotorController _motor = null!;
         private ConveyorController _conveyor = null!;
 
+        /// <summary>
+        /// Initializes new hardware and controller objects before each test runs.
+        /// Ensures a clean, consistent starting state.
+        /// </summary>
         [TestInitialize]
         public void Setup()
         {
@@ -20,12 +28,18 @@ namespace Warehouse_Management_Test
             _conveyor = new ConveyorController(_motor, _hw);
         }
 
+        /// <summary>
+        /// Verifies that the motor (hardware) is stopped when initialized.
+        /// </summary>
         [TestMethod]
         public void Test_Motor_Starts_Initially_Stopped()
         {
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Starting the conveyor should set the hardware running flag to true.
+        /// </summary>
         [TestMethod]
         public void Test_Conveyor_Start_Sets_Hardware_Running()
         {
@@ -33,6 +47,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Stopping the conveyor should cause the hardware to stop running.
+        /// </summary>
         [TestMethod]
         public void Test_Conveyor_Stop_Sets_Hardware_Stopped()
         {
@@ -41,6 +58,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Test that setting a normal valid speed does not cause errors.
+        /// </summary>
         [TestMethod]
         public void Test_Motor_SetSpeed_Valid()
         {
@@ -48,6 +68,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(true);
         }
 
+        /// <summary>
+        /// Setting the motor speed to zero should be accepted.
+        /// </summary>
         [TestMethod]
         public void Test_Motor_SetSpeed_Zero()
         {
@@ -55,6 +78,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(true);
         }
 
+        /// <summary>
+        /// Setting the motor speed to the maximum allowed value should not fail.
+        /// </summary>
         [TestMethod]
         public void Test_Motor_SetSpeed_Max()
         {
@@ -62,6 +88,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(true);
         }
 
+        /// <summary>
+        /// If a jam is detected, the conveyor should automatically stop.
+        /// </summary>
         [TestMethod]
         public void Test_Jam_Detection_Stops_Motor()
         {
@@ -71,6 +100,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Clearing a jam should allow the conveyor to be started again.
+        /// </summary>
         [TestMethod]
         public void Test_Clear_Jam_Allows_Restart()
         {
@@ -82,6 +114,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Emergency stop should prevent the conveyor from starting.
+        /// </summary>
         [TestMethod]
         public void Test_EStop_Prevents_Start()
         {
@@ -90,6 +125,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Triggering emergency stop while running should stop the conveyor immediately.
+        /// </summary>
         [TestMethod]
         public void Test_EStop_Stops_Running_Conveyor()
         {
@@ -99,6 +137,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// After resetting emergency stop, the conveyor should be allowed to start again.
+        /// </summary>
         [TestMethod]
         public void Test_Reset_EStop_Allows_Start()
         {
@@ -109,6 +150,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Confirms that the conveyor reports running after Start() is called.
+        /// </summary>
         [TestMethod]
         public void Test_Conveyor_IsRunning_Property()
         {
@@ -116,6 +160,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Starting the conveyor when it's already running should not cause failures.
+        /// </summary>
         [TestMethod]
         public void Test_Start_Already_Running()
         {
@@ -124,6 +171,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Stopping the conveyor when it is already stopped should not cause errors.
+        /// </summary>
         [TestMethod]
         public void Test_Stop_Already_Stopped()
         {
@@ -131,6 +181,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Basic toggle behavior: start → stop → start should work correctly.
+        /// </summary>
         [TestMethod]
         public void Test_Toggle_Start_Stop()
         {
@@ -140,6 +193,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Confirms jam detection logic does not incorrectly toggle the flag.
+        /// </summary>
         [TestMethod]
         public void Test_Jam_Flag_Interaction()
         {
@@ -148,6 +204,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.JamDetected);
         }
 
+        /// <summary>
+        /// Negative speed values should be rejected or handled gracefully.
+        /// </summary>
         [TestMethod]
         public void Test_Motor_Speed_Negative_Handling()
         {
@@ -155,6 +214,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(true);
         }
 
+        /// <summary>
+        /// Speeds above the max limit should be handled safely.
+        /// </summary>
         [TestMethod]
         public void Test_Motor_Speed_OverLimit_Handling()
         {
@@ -162,6 +224,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(true);
         }
 
+        /// <summary>
+        /// Ensures logging (if implemented) does not cause failures when starting the conveyor.
+        /// </summary>
         [TestMethod]
         public void Test_Conveyor_Start_Check_Logs()
         {
@@ -169,6 +234,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(true);
         }
 
+        /// <summary>
+        /// Verifies hardware initializes properly with expected default values.
+        /// </summary>
         [TestMethod]
         public void Test_Hardware_Initialization()
         {
@@ -176,18 +244,27 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.JamDetected);
         }
 
+        /// <summary>
+        /// Ensures the motor controller instance exists after setup.
+        /// </summary>
         [TestMethod]
         public void Test_Motor_Null_Dependencies()
         {
             Assert.IsNotNull(_motor);
         }
 
+        /// <summary>
+        /// Ensures the conveyor controller instance exists after setup.
+        /// </summary>
         [TestMethod]
         public void Test_Conveyor_Null_Dependencies()
         {
             Assert.IsNotNull(_conveyor);
         }
 
+        /// <summary>
+        /// Emergency stop should always override jam and force the conveyor off.
+        /// </summary>
         [TestMethod]
         public void Test_Emergency_Stop_Override_Jam()
         {
@@ -198,6 +275,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Rapid start/stop cycling should not break the system and must end stopped.
+        /// </summary>
         [TestMethod]
         public void Test_Rapid_Switching()
         {
@@ -209,6 +289,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Conveyor should not start if a jam is detected while stopped.
+        /// </summary>
         [TestMethod]
         public void Test_Jam_While_Stopped()
         {

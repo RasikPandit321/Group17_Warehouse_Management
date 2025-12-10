@@ -5,12 +5,21 @@ using System;
 
 namespace Warehouse_Management_Test
 {
+    /// <summary>
+    /// Unit tests for TemperatureSensor, FanController,
+    /// and EnergyReporter components in the environment subsystem.
+    /// Ensures temperature reading, hysteresis logic, and reporting all behave correctly.
+    /// </summary>
     [TestClass]
     public class EnvironmentUnitTests
     {
         private TemperatureSensor _sensor = null!;
         private FanController _fan = null!;
 
+        /// <summary>
+        /// Creates a fresh temperature sensor and fan controller before each test.
+        /// Ensures consistent test state.
+        /// </summary>
         [TestInitialize]
         public void Setup()
         {
@@ -18,6 +27,9 @@ namespace Warehouse_Management_Test
             _fan = new FanController(30, 25);
         }
 
+        /// <summary>
+        /// The sensor should return a valid temperature value within the initialized range.
+        /// </summary>
         [TestMethod]
         public void Test_Sensor_Reads_Value()
         {
@@ -25,12 +37,18 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(temp >= 19.0 && temp <= 36.0);
         }
 
+        /// <summary>
+        /// The fan should begin powered off upon initialization.
+        /// </summary>
         [TestMethod]
         public void Test_Fan_Starts_Off()
         {
             Assert.IsFalse(_fan.IsOn);
         }
 
+        /// <summary>
+        /// When the temperature exceeds the ON threshold, the fan should turn on.
+        /// </summary>
         [TestMethod]
         public void Test_Fan_Turns_On_Above_Threshold()
         {
@@ -38,6 +56,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Once turned on, the fan should remain on until temperature drops below the OFF threshold.
+        /// </summary>
         [TestMethod]
         public void Test_Fan_Stays_On_Above_Hysteresis()
         {
@@ -46,6 +67,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_fan.IsOn);
         }
 
+        /// <summary>
+        /// When temperature falls below the OFF threshold, the fan should turn off.
+        /// </summary>
         [TestMethod]
         public void Test_Fan_Turns_Off_Below_Threshold()
         {
@@ -54,6 +78,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_fan.IsOn);
         }
 
+        /// <summary>
+        /// The fan should not turn on if temperature stays below the ON threshold.
+        /// </summary>
         [TestMethod]
         public void Test_Fan_DoesNot_Turn_On_Below_Threshold()
         {
@@ -61,6 +88,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Ensures EnergySample objects can be instantiated properly.
+        /// </summary>
         [TestMethod]
         public void Test_EnergySample_Creation()
         {
@@ -68,6 +98,9 @@ namespace Warehouse_Management_Test
             Assert.AreEqual(25, sample.Temperature);
         }
 
+        /// <summary>
+        /// EnergyReporter should produce a perfect score when conditions are ideal.
+        /// </summary>
         [TestMethod]
         public void Test_Report_Compute_Score_Ideal()
         {
@@ -78,6 +111,9 @@ namespace Warehouse_Management_Test
             Assert.AreEqual(100.0, report.EnergyScore);
         }
 
+        /// <summary>
+        /// Poor environmental conditions should result in a lower energy score.
+        /// </summary>
         [TestMethod]
         public void Test_Report_Compute_Score_Worst()
         {
@@ -88,6 +124,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(report.EnergyScore < 100);
         }
 
+        /// <summary>
+        /// Computes the average temperature correctly from multiple samples.
+        /// </summary>
         [TestMethod]
         public void Test_Report_Average_Temp()
         {
@@ -99,6 +138,9 @@ namespace Warehouse_Management_Test
             Assert.AreEqual(25.0, report.AverageTemperature, 0.1);
         }
 
+        /// <summary>
+        /// Report generation should fail when given an empty list of samples.
+        /// </summary>
         [TestMethod]
         public void Test_Report_Empty_Samples()
         {
@@ -107,6 +149,9 @@ namespace Warehouse_Management_Test
                 EnergyReporter.ComputeFromSamples(samples, 0.5));
         }
 
+        /// <summary>
+        /// Fan uptime influences energy score; verify basic calculation behavior.
+        /// </summary>
         [TestMethod]
         public void Test_Report_Fan_Uptime()
         {
@@ -118,6 +163,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(report.EnergyScore < 100);
         }
 
+        /// <summary>
+        /// Extremely high temperatures should force the fan to turn on.
+        /// </summary>
         [TestMethod]
         public void Test_Extreme_High_Temp()
         {
@@ -125,6 +173,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Extremely low temperatures should not trigger the fan.
+        /// </summary>
         [TestMethod]
         public void Test_Extreme_Low_Temp()
         {
@@ -132,6 +183,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Ensures calling ReadTemperature() multiple times returns valid numbers.
+        /// </summary>
         [TestMethod]
         public void Test_Sensor_Variation()
         {
@@ -140,6 +194,9 @@ namespace Warehouse_Management_Test
             Assert.AreNotEqual(double.NaN, t2);
         }
 
+        /// <summary>
+        /// Saving a report to CSV should return a valid filename string.
+        /// </summary>
         [TestMethod]
         public void Test_CSV_Generation_String()
         {
@@ -149,6 +206,9 @@ namespace Warehouse_Management_Test
             StringAssert.Contains(csv, "energy_report_");
         }
 
+        /// <summary>
+        /// Fan should correctly toggle between on/off based on temperature transitions.
+        /// </summary>
         [TestMethod]
         public void Test_Mixed_Fan_States()
         {
@@ -158,6 +218,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Rapid fluctuating temperatures should correctly follow the hysteresis logic.
+        /// </summary>
         [TestMethod]
         public void Test_Rapid_Temp_Fluctuation()
         {
@@ -167,6 +230,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Null sample list handling test. Should throw exception or be safely handled.
+        /// </summary>
         [TestMethod]
         public void Test_Null_Sample_List_Handling()
         {
@@ -181,6 +247,9 @@ namespace Warehouse_Management_Test
             }
         }
 
+        /// <summary>
+        /// Ensures price factor affects the score calculation but does not break processing.
+        /// </summary>
         [TestMethod]
         public void Test_Price_Factor_Influence()
         {
@@ -189,6 +258,9 @@ namespace Warehouse_Management_Test
             Assert.IsNotNull(reportHigh);
         }
 
+        /// <summary>
+        /// Verifies timestamps in sample objects are assigned correctly.
+        /// </summary>
         [TestMethod]
         public void Test_Timestamp_Assignment()
         {
@@ -196,18 +268,27 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(sample.Timestamp > DateTime.MinValue);
         }
 
+        /// <summary>
+        /// Sensor should not exceed reasonable maximum temperature ranges.
+        /// </summary>
         [TestMethod]
         public void Test_Max_Temp_Limit()
         {
             Assert.IsTrue(_sensor.ReadTemperature() < 100);
         }
 
+        /// <summary>
+        /// Sensor should not read unrealistic low temperatures.
+        /// </summary>
         [TestMethod]
         public void Test_Min_Temp_Limit()
         {
             Assert.IsTrue(_sensor.ReadTemperature() > -50);
         }
 
+        /// <summary>
+        /// Test that computing a score with zero samples throws an exception.
+        /// </summary>
         [TestMethod]
         public void Test_Zero_Samples_Score()
         {
@@ -215,6 +296,9 @@ namespace Warehouse_Management_Test
                 EnergyReporter.ComputeFromSamples(new List<EnergySample>(), 0.5));
         }
 
+        /// <summary>
+        /// A single energy sample should still produce a valid energy report.
+        /// </summary>
         [TestMethod]
         public void Test_Single_Sample()
         {

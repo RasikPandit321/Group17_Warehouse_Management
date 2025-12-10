@@ -4,35 +4,35 @@
     padding: 20px;
     font-family: 'Inter', system-ui, sans-serif;
     text-align: center;
-    background-color: #1a1a1a;
-    color: #e0e0e0;
-    min-height: 100vh;
+    background-color: #1a1a1a; /* Main dark background */
+    color: #e0e0e0; /* Default text color */
+    min-height: 100vh; /* Full screen height */
 }
 
 /* --- Layout --- */
 .dashboard-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 20px; /* Space between sections */
 }
 
 .grid-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr; /* 2-column layout */
     gap: 20px;
 }
 
 /* Panels */
 .controls-section, .env-panel, .routing-panel, .chart-panel, .alarm-panel {
-    background: #2a2a2a;
+    background: #2a2a2a; /* Panel background */
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3); /* Soft shadow */
     text-align: left;
 }
 
 .full-width {
-    grid-column: span 2;
+    grid-column: span 2; /* Makes a panel stretch across both columns */
 }
 
 /* Status Bar */
@@ -48,22 +48,23 @@
 .status-ok {
     color: #4caf50;
 }
-
+/* Good status (Green) */
 .status-err {
     color: #f44336;
 }
-
+/* Error (Red) */
 .status-running {
     color: #4caf50;
 }
-
+/* Motor running */
 .status-stopped {
     color: #ff9800;
 }
+/* Motor stopped */
 
 /* Controls */
 .start-btn {
-    background-color: #2e7d32;
+    background-color: #2e7d32; /* Green start */
     color: white;
     padding: 10px 20px;
     border: none;
@@ -74,7 +75,7 @@
 }
 
 .stop-btn {
-    background-color: #d32f2f;
+    background-color: #d32f2f; /* Red stop */
     color: white;
     padding: 10px 20px;
     border: none;
@@ -90,7 +91,7 @@
     flex-direction: column;
 }
 
-/* Environment (Sprint 3) */
+/* Environment Metrics (Sprint 3) */
 .metrics-row {
     display: flex;
     justify-content: space-between;
@@ -105,15 +106,17 @@
     text-align: center;
 }
 
+    /* Visual warning border */
     .metric-box.warning {
         border: 1px solid #ff9800;
         color: #ff9800;
     }
 
 .fan-box.active {
-    color: #2196f3;
+    color: #2196f3; /* Blue highlight for active fan */
 }
 
+/* Progress bar styling */
 .progress-bar {
     background: #444;
     height: 8px;
@@ -124,10 +127,10 @@
 
 .fill {
     height: 100%;
-    transition: width 0.5s;
+    transition: width 0.5s; /* Smooth fill animation */
 }
 
-/* Routing */
+/* Routing Display */
 .routing-display {
     display: flex;
     justify-content: space-around;
@@ -142,6 +145,7 @@
     border-radius: 4px;
 }
 
+/* Zone badge color coding */
 .zone-badge {
     background: #2196f3;
     padding: 5px 15px;
@@ -151,10 +155,11 @@
 }
 
     .zone-badge.blocked {
-        background: #d32f2f;
+        background: #d32f2f; /* Red when blocked */
     }
 
-/* Alarms (Sprint 2 Restored) */
+/* --- Alarm Panel (Sprint 2 Restored) --- */
+
 .alarm-header {
     display: flex;
     justify-content: space-between;
@@ -175,7 +180,7 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: 250px;
+    max-height: 250px; /* Scrollable list */
     overflow-y: auto;
 }
 
@@ -186,10 +191,11 @@
     margin-bottom: 8px;
     background-color: #333;
     border-radius: 6px;
-    border-left: 5px solid transparent;
+    border-left: 5px solid transparent; /* Color-coded by severity */
     transition: transform 0.2s;
 }
 
+    /* Clickable alarm items */
     .alarm-item.clickable {
         cursor: pointer;
     }
@@ -199,6 +205,7 @@
             filter: brightness(1.2);
         }
 
+    /* Severity colors */
     .alarm-item.high {
         border-left-color: #ff4444;
         background-color: rgba(255, 68, 68, 0.1);
@@ -237,7 +244,7 @@
     margin-bottom: 4px;
 }
 
-/* Modal */
+/* --- Modal Window --- */
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -248,7 +255,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 1000; /* Always top */
 }
 
 .modal-content {
@@ -261,6 +268,7 @@
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
+/* Modal header color matches severity */
 .modal-header {
     padding: 15px;
     display: flex;
@@ -311,17 +319,15 @@
         cursor: pointer;
     }
 
-
+/* Fan value alignment */
 .fan-box .value {
     display: inline-block;
-    width: 100px; /* Reserve fixed space */
-    text-align: center; /* Keep text centered within that space */
-    white-space: nowrap; /* Prevent wrapping */
+    width: 100px;
+    text-align: center;
+    white-space: nowrap;
 }
 
-/* ... existing styles ... */
-
-/* NEW: 3-Lane Styles */
+/* --- Lane System --- */
 .lanes-container {
     display: flex;
     justify-content: space-between;
@@ -344,10 +350,12 @@
         color: #aaa;
     }
 
+    /* Heavy lane special highlight */
     .lane-box.heavy {
-        border-color: #ffbb33; /* Highlights the Heavy lane */
+        border-color: #ffbb33;
     }
 
+/* Package slot styling */
 .package-slot {
     height: 50px;
     background: #222;
@@ -357,10 +365,10 @@
     justify-content: center;
     font-family: monospace;
     color: #555;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease; /* Smooth animation */
 }
 
-    /* When a package is present */
+    /* When a package exists */
     .package-slot.occupied {
         background: #2196f3;
         color: white;
@@ -370,59 +378,59 @@
         transform: scale(1.05);
     }
 
+/* Heavy lane occupied override */
 .lane-box.heavy .package-slot.occupied {
     background: #ffbb33;
     color: black;
     box-shadow: 0 0 15px rgba(255, 187, 51, 0.5);
 }
 
-/* --- UI STABILITY FIXES --- */
+/* --- UI Stability Fixes --- */
 
-/* 1. Prevent Number Jitter */
-/* This makes all numbers take up equal space (like a typewriter) */
+/* Equal-width numbers (prevents jitter) */
 .value, .score-text, .alarm-time {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
 }
 
-/* 2. Fix Temperature & Fan Box Width */
-/* Reserves consistent space regardless of value length */
+/* Consistent metric value width */
 .metric-box .value {
     display: inline-block;
-    width: 120px; /* Wide enough for "100.0°C" or "🌀 ON" */
+    width: 120px;
     text-align: center;
     white-space: nowrap;
 }
 
-/* 3. Fix Energy Score Width */
+/* Energy score fixed width */
 .score-text {
     display: inline-block;
-    width: 50px; /* Fixed width for score "100" */
+    width: 50px;
     text-align: right;
 }
 
-/* 4. Fix Routing Panel Jitter */
+/* Prevent barcode jitter */
 .barcode {
     display: inline-block;
-    width: 140px; /* Fixed space for barcode text */
+    width: 140px;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+/* Zone badge fixed width */
 .zone-badge {
     display: inline-block;
-    width: 110px; /* Fixed space for "Lane 3" */
+    width: 110px;
     text-align: center;
 }
 
-/* 5. Ensure Metric Boxes don't shrink unevenly */
+/* Prevent metric box shrinking */
 .metric-box {
-    min-width: 140px; /* Prevents the box itself from collapsing */
+    min-width: 140px;
 }
 
-/* Simulation Controls */
+/* Simulation controls */
 .sim-controls {
     margin-top: 20px;
     border-top: 1px solid #444;
@@ -441,6 +449,7 @@
     flex-wrap: wrap;
 }
 
+/* Sim UI buttons */
 .sim-btn {
     flex: 1;
     padding: 8px;
@@ -456,6 +465,7 @@
         filter: brightness(1.1);
     }
 
+    /* Button severity colors */
     .sim-btn.jam {
         background-color: #ff9800;
         color: #000;
@@ -471,15 +481,16 @@
         color: #fff;
     }
 
-/* Blocked Lane Style */
+/* Blocked lane indicator */
 .package-slot.blocked-lane {
-    background-color: #d32f2f; /* Red */
+    background-color: #d32f2f;
     color: white;
     border: 2px dashed white;
     font-weight: bold;
     animation: pulse 2s infinite;
 }
 
+/* Pulse animation */
 @keyframes pulse {
     0% {
         opacity: 1;
@@ -494,11 +505,9 @@
     }
 }
 
-/* --- Lane Colors --- */
-
-/* Lane 1: Express (Green) */
+/* Lane color overrides */
 .lane-box.express {
-    border-color: #4caf50;
+    border-color: #4caf50; /* Green lane */
 }
 
     .lane-box.express .package-slot.occupied {
@@ -507,9 +516,8 @@
         box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
     }
 
-/* Lane 2: Standard (Blue) */
 .lane-box.standard {
-    border-color: #2196f3;
+    border-color: #2196f3; /* Blue lane */
 }
 
     .lane-box.standard .package-slot.occupied {
@@ -518,7 +526,7 @@
         box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
     }
 
-/* Lane 3: Heavy (Orange/Yellow) - Ensuring this override stays */
+/* Heavy lane — repeated intentionally to ensure override */
 .lane-box.heavy {
     border-color: #ffbb33;
 }

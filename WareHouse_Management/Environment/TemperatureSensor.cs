@@ -6,12 +6,12 @@ namespace WareHouse_Management.Environment
 {
     public class TemperatureSensor
     {
-        private readonly Random _random = new Random();
+        private readonly Random _random = new Random(); // Random generator for simulated temps
 
-        public double MinTemp { get; }
-        public double MaxTemp { get; }
+        public double MinTemp { get; } // Minimum random temperature
+        public double MaxTemp { get; } // Maximum random temperature
 
-        private readonly Queue<double>? _csvValues;
+        private readonly Queue<double>? _csvValues; // Optional queue of CSV temperatures
 
         public TemperatureSensor(double minTemp, double maxTemp)
         {
@@ -20,12 +20,12 @@ namespace WareHouse_Management.Environment
 
             MinTemp = minTemp;
             MaxTemp = maxTemp;
-            _csvValues = null;
+            _csvValues = null; // No CSV mode for this constructor
         }
 
         public static TemperatureSensor FromCsv(string path)
         {
-            // ✔ NEW validation
+            // Validate input CSV file path
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentException("CSV path must be provided.", nameof(path));
 
@@ -34,6 +34,7 @@ namespace WareHouse_Management.Environment
 
             var values = new Queue<double>();
 
+            // Read each line and parse temperature values
             foreach (var line in File.ReadAllLines(path))
             {
                 if (double.TryParse(line.Trim(), out double temp))
@@ -43,27 +44,27 @@ namespace WareHouse_Management.Environment
             if (values.Count == 0)
                 throw new InvalidOperationException("CSV contained no valid temperatures.");
 
-            return new TemperatureSensor(values);
+            return new TemperatureSensor(values); // Create sensor in CSV mode
         }
 
         private TemperatureSensor(Queue<double> csvValues)
         {
-            _csvValues = csvValues;
-            MinTemp = double.NaN;
-            MaxTemp = double.NaN;
+            _csvValues = csvValues; // Store CSV temp sequence
+            MinTemp = double.NaN;   // Not used in CSV mode
+            MaxTemp = double.NaN;   // Not used in CSV mode
         }
 
         public double ReadTemperature()
         {
-            // CSV mode: replay values from the queue in a loop
+            // CSV mode: continuously cycle through provided values
             if (_csvValues != null)
             {
                 double value = _csvValues.Dequeue();
-                _csvValues.Enqueue(value);
+                _csvValues.Enqueue(value); // Put it back for looping
                 return Math.Round(value, 1);
             }
 
-            // Random mode
+            // Random mode: generate temp between MinTemp and MaxTemp
             double randomValue = MinTemp + _random.NextDouble() * (MaxTemp - MinTemp);
             return Math.Round(randomValue, 1);
         }

@@ -1,5 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using WareHouse_Management.Alarm_and_Estop; // Fixed Namespace
+using WareHouse_Management.Alarm_and_Estop;
 using System.IO;
 using System;
 using System.Linq;
@@ -12,50 +12,50 @@ namespace Warehouse_Management_Test
         [TestInitialize]
         public void Setup()
         {
-            EmergencyStop.Reset("Test Setup");
+            EmergencyStop.Reset("Test Setup"); // Reset state before each test
         }
 
         [TestMethod]
         public void Test_Alarm_Raise_creates_File()
         {
-            Alarm.Raise("Test Alarm");
-            Assert.IsTrue(File.Exists("alarm.txt"));
+            Alarm.Raise("Test Alarm"); // Trigger alarm
+            Assert.IsTrue(File.Exists("alarm.txt")); // Verify file exists
         }
 
         [TestMethod]
         public void Test_Alarm_Content_Is_Written()
         {
-            string msg = "UniqueTestMessage_" + Guid.NewGuid();
-            Alarm.Raise(msg);
-            string content = File.ReadAllText("alarm.txt");
-            StringAssert.Contains(content, msg);
+            string msg = "UniqueTestMessage_" + Guid.NewGuid(); // Unique content
+            Alarm.Raise(msg); // Log message
+            string content = File.ReadAllText("alarm.txt"); // Read log file
+            StringAssert.Contains(content, msg); // Verify message exists
         }
 
         [TestMethod]
         public void Test_Alarm_Raise_HighSeverity()
         {
-            Alarm.Raise("High Severity Alarm");
-            Assert.IsTrue(File.Exists("alarm.txt"));
+            Alarm.Raise("High Severity Alarm"); // Log high severity
+            Assert.IsTrue(File.Exists("alarm.txt")); // File should exist
         }
 
         [TestMethod]
         public void Test_Alarm_Raise_LowSeverity()
         {
-            Alarm.Raise("Low Battery Warning");
+            Alarm.Raise("Low Battery Warning"); // Log low severity
             Assert.IsTrue(File.Exists("alarm.txt"));
         }
 
         [TestMethod]
         public void Test_Alarm_Raise_EmptyMessage()
         {
-            Alarm.Raise("");
+            Alarm.Raise(""); // Empty message allowed
             Assert.IsTrue(File.Exists("alarm.txt"));
         }
 
         [TestMethod]
         public void Test_Alarm_Raise_NullMessage()
         {
-            Alarm.Raise(null!); // Suppress null warning for test
+            Alarm.Raise(null!); // Test null input
             Assert.IsTrue(File.Exists("alarm.txt"));
         }
 
@@ -64,80 +64,79 @@ namespace Warehouse_Management_Test
         {
             Alarm.Raise("Alarm 1");
             Alarm.Raise("Alarm 2");
-            var lines = File.ReadAllLines("alarm.txt");
-            Assert.IsTrue(lines.Length >= 2);
+            var lines = File.ReadAllLines("alarm.txt"); // Read all lines
+            Assert.IsTrue(lines.Length >= 2); // Ensure both were logged
         }
 
         [TestMethod]
         public void Test_EStop_Trigger_SetsState()
         {
-            EmergencyStop.Estop("Emergency Button Pressed");
-            string content = File.ReadAllText("alarm.txt"); // Assuming EStop logs to alarm file or log file
-            // Note: Implementation specific validation
-            Assert.IsTrue(true);
+            EmergencyStop.Estop("Emergency Button Pressed"); // Trigger E-Stop
+            string content = File.ReadAllText("alarm.txt"); // Implementation specific
+            Assert.IsTrue(true); // Placeholder validation
         }
 
         [TestMethod]
         public void Test_EStop_Reset_LogEntry()
         {
-            EmergencyStop.Reset("System Reset");
-            Assert.IsTrue(true); // implementation specific
+            EmergencyStop.Reset("System Reset"); // Reset E-Stop
+            Assert.IsTrue(true); // Behavior depends on implementation
         }
 
         [TestMethod]
         public void Test_Log_Write_CreatesFile()
         {
-            Log.Write("General Info Log");
+            Log.Write("General Info Log"); // Write to log
             Assert.IsTrue(File.Exists("logs.txt"));
         }
 
         [TestMethod]
         public void Test_Log_Content_Match()
         {
-            string id = Guid.NewGuid().ToString();
-            Log.Write($"User Login {id}");
-            string content = File.ReadAllText("logs.txt");
-            StringAssert.Contains(content, id);
+            string id = Guid.NewGuid().ToString(); // Unique payload
+            Log.Write($"User Login {id}"); // Write entry
+            string content = File.ReadAllText("logs.txt"); // Read file
+            StringAssert.Contains(content, id); // Check match
         }
 
         [TestMethod]
         public void Test_Log_Append_Mode()
         {
-            File.Delete("logs.txt");
+            File.Delete("logs.txt"); // Reset file
             Log.Write("Line 1");
             Log.Write("Line 2");
-            var lines = File.ReadAllLines("logs.txt");
-            Assert.AreEqual(2, lines.Length);
+            var lines = File.ReadAllLines("logs.txt"); // Read all lines
+            Assert.AreEqual(2, lines.Length); // Should append, not overwrite
         }
 
         [TestMethod]
         public void Test_Log_Empty_Message()
         {
-            Log.Write("");
+            Log.Write(""); // Allow empty writes
             Assert.IsTrue(File.Exists("logs.txt"));
         }
 
         [TestMethod]
         public void Test_EStop_Then_Alarm()
         {
-            EmergencyStop.Estop("Stop");
-            Alarm.Raise("Post Stop Alarm");
+            EmergencyStop.Estop("Stop"); // Trigger E-Stop
+            Alarm.Raise("Post Stop Alarm"); // Alarm after stop
             Assert.IsTrue(File.Exists("alarm.txt"));
         }
 
         [TestMethod]
         public void Test_Alarm_File_Creation_If_Deleted()
         {
-            if (File.Exists("alarm.txt")) File.Delete("alarm.txt");
-            Alarm.Raise("New File Test");
+            if (File.Exists("alarm.txt")) File.Delete("alarm.txt"); // Remove file
+            Alarm.Raise("New File Test"); // Should recreate
             Assert.IsTrue(File.Exists("alarm.txt"));
         }
 
         [TestMethod]
         public void Test_Log_File_Creation_If_Deleted()
         {
-            if (File.Exists("logs.txt")) File.Delete("logs.txt");
-            Log.Write("New Log File");
+            if (File.Exists("logs.txt")) File.Delete("logs.txt"); // Remove file
+            Log.Write("New Log File"); // Should recreate
             Assert.IsTrue(File.Exists("logs.txt"));
         }
 
@@ -145,8 +144,8 @@ namespace Warehouse_Management_Test
         public void Test_Alarm_Timestamp_Exists()
         {
             Alarm.Raise("Time Check");
-            string lastLine = File.ReadLines("alarm.txt").Last();
-            StringAssert.Contains(lastLine, "[");
+            string lastLine = File.ReadLines("alarm.txt").Last(); // Last log entry
+            StringAssert.Contains(lastLine, "["); // Timestamp format
         }
 
         [TestMethod]
@@ -160,9 +159,9 @@ namespace Warehouse_Management_Test
         [TestMethod]
         public void Test_Large_Log_Volume()
         {
-            for (int i = 0; i < 50; i++) Log.Write($"Log {i}");
+            for (int i = 0; i < 50; i++) Log.Write($"Log {i}"); // Multiple entries
             var lines = File.ReadAllLines("logs.txt");
-            Assert.IsTrue(lines.Length >= 50);
+            Assert.IsTrue(lines.Length >= 50); // Ensure all appended
         }
 
         [TestMethod]
@@ -177,38 +176,38 @@ namespace Warehouse_Management_Test
         public void Test_Reset_After_Crash()
         {
             EmergencyStop.Estop("Crash");
-            EmergencyStop.Reset("Recovered");
+            EmergencyStop.Reset("Recovered"); // Reset after E-Stop
             Assert.IsTrue(true);
         }
 
         [TestMethod]
         public void Test_Log_Write_Null()
         {
-            Log.Write(null!);
+            Log.Write(null!); // Test null handling
             Assert.IsTrue(true);
         }
 
         [TestMethod]
         public void Test_EStop_Null_Message()
         {
-            EmergencyStop.Estop(null!);
+            EmergencyStop.Estop(null!); // Test null handling
             Assert.IsTrue(true);
         }
 
         [TestMethod]
         public void Test_Reset_Null_Message()
         {
-            EmergencyStop.Reset(null!);
+            EmergencyStop.Reset(null!); // Test null handling
             Assert.IsTrue(true);
         }
 
         [TestMethod]
         public void Test_Simulate_Complex_Scenario()
         {
-            Log.Write("Start");
-            Alarm.Raise("Warning");
-            EmergencyStop.Estop("Stop");
-            Assert.IsTrue(File.Exists("logs.txt"));
+            Log.Write("Start");              // Write log
+            Alarm.Raise("Warning");          // Raise alarm
+            EmergencyStop.Estop("Stop");     // Trigger emergency stop
+            Assert.IsTrue(File.Exists("logs.txt")); // Ensure main log exists
         }
     }
 }

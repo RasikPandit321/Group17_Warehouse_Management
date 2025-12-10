@@ -6,7 +6,7 @@ namespace WareHouse_Management.Environment
 {
     public static class EnvironmentEnergyRunner
     {
-        // Optional standalone demo (not used by integration Program.cs)
+        // Standalone demo
         public static async Task RunAsync()
         {
             Console.WriteLine("Temperature Sensor Output");
@@ -33,7 +33,7 @@ namespace WareHouse_Management.Environment
             await GenerateEnergyReportAsync(sensor);
         }
 
-        // Demo-only: generates its own samples from the given sensor
+        // Generates its own samples from the given sensor
         private static async Task GenerateEnergyReportAsync(TemperatureSensor sensor)
         {
             int sampleCount = 60;

@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Warehouse;
 using WareHouse_Management.Alarm_and_Estop; // Fixed Namespace
 using WareHouse_Management.Conveyor_and_Motor;
@@ -6,10 +6,15 @@ using WareHouse_Management.Environment;
 
 namespace Warehouse_Management_Test
 {
+    /// <summary>
+    /// Integration-level tests validating how multiple subsystems
+    /// (motor, conveyor, routing, sensors, alarms, estop, energy) work together.
+    /// Ensures cross-component interactions behave as expected.
+    /// </summary>
     [TestClass]
     public class IntegrationTests
     {
-        // FIX: Use null!
+        // Hardware and subsystem instances used for full integration coverage.
         private SimulatedHardware _hw = null!;
         private MotorController _motor = null!;
         private ConveyorController _conveyor = null!;
@@ -17,6 +22,10 @@ namespace Warehouse_Management_Test
         private TemperatureSensor _temp = null!;
         private FanController _fan = null!;
 
+        /// <summary>
+        /// Creates fresh simulated hardware and controllers before each test.
+        /// Ensures no state carries over across test cases.
+        /// </summary>
         [TestInitialize]
         public void Setup()
         {
@@ -27,10 +36,14 @@ namespace Warehouse_Management_Test
             _temp = new TemperatureSensor(20, 35);
             _fan = new FanController(30, 25);
 
+            // Reset hardware status
             _hw.JamDetected = false;
             _hw.EStop = false;
         }
 
+        /// <summary>
+        /// Full workflow: conveyor running + routing a light package should select Lane1.
+        /// </summary>
         [TestMethod]
         public void Test_FullFlow_LightPackage()
         {
@@ -40,6 +53,9 @@ namespace Warehouse_Management_Test
             Assert.AreEqual("Lane1", route.TargetLane);
         }
 
+        /// <summary>
+        /// Full workflow with a heavy package; routing should select Lane3.
+        /// </summary>
         [TestMethod]
         public void Test_FullFlow_HeavyPackage()
         {
@@ -49,26 +65,33 @@ namespace Warehouse_Management_Test
             Assert.AreEqual("Lane3", route.TargetLane);
         }
 
+        /// <summary>
+        /// When jam is detected, conveyor should stop automatically.
+        /// </summary>
         [TestMethod]
         public void Test_Jam_Stops_Motor_And_Raises_Alarm()
         {
             _conveyor.Start();
             _hw.JamDetected = true;
             _conveyor.CheckJam();
-
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Activating the emergency stop must halt all motor operations.
+        /// </summary>
         [TestMethod]
         public void Test_EStop_Stops_Everything()
         {
             _conveyor.Start();
             _hw.EStop = true;
             _motor.Stop();
-
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// High temperature should activate the cooling fan.
+        /// </summary>
         [TestMethod]
         public void Test_HighTemp_Activates_Fan()
         {
@@ -77,6 +100,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Fan running should reduce energy score in generated reports.
+        /// </summary>
         [TestMethod]
         public void Test_Fan_Lowers_Energy_Score()
         {
@@ -87,6 +113,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(report.EnergyScore < 100);
         }
 
+        /// <summary>
+        /// System should allow recovery after a jam once cleared.
+        /// </summary>
         [TestMethod]
         public void Test_Recover_From_Jam()
         {
@@ -102,6 +131,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Recovery from emergency stop should allow conveyor to resume operation.
+        /// </summary>
         [TestMethod]
         public void Test_Recover_From_EStop()
         {
@@ -110,13 +142,15 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
 
             _hw.EStop = false;
-            // FIX: Added definition for Reset now calls correctly
             EmergencyStop.Reset("Resetting");
             _conveyor.Start();
 
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Routing should function normally while the conveyor is running.
+        /// </summary>
         [TestMethod]
         public void Test_Integration_Routing_While_Running()
         {
@@ -125,6 +159,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Routing should not interfere with motor or conveyor operations.
+        /// </summary>
         [TestMethod]
         public void Test_Integration_Routing_DoesNot_Affect_Motor()
         {
@@ -133,6 +170,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Environment subsystem (fan) should operate independently of conveyor state.
+        /// </summary>
         [TestMethod]
         public void Test_Environment_Updates_Independent_Of_Motor()
         {
@@ -141,6 +181,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_fan.IsOn);
         }
 
+        /// <summary>
+        /// A jam condition should trigger alarm logging.
+        /// </summary>
         [TestMethod]
         public void Test_Alarm_Logging_During_Jam()
         {
@@ -149,6 +192,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(System.IO.File.Exists("alarm.txt"));
         }
 
+        /// <summary>
+        /// Generating an energy report should create a CSV file.
+        /// </summary>
         [TestMethod]
         public void Test_EnergyReport_Generation()
         {
@@ -157,6 +203,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(System.IO.File.Exists(file));
         }
 
+        /// <summary>
+        /// The system should start in a safe idle state with no active faults.
+        /// </summary>
         [TestMethod]
         public void Test_System_Startup_State()
         {
@@ -165,6 +214,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Jam + heavy package handling; routing still works but conveyor must stop.
+        /// </summary>
         [TestMethod]
         public void Test_Simultaneous_Jam_And_Overweight()
         {
@@ -177,6 +229,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Temperature high + emergency stop: motors must stay off but fan turns on.
+        /// </summary>
         [TestMethod]
         public void Test_Simultaneous_EStop_And_TempHigh()
         {
@@ -187,15 +242,20 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Changing motor speed while running should not stop the conveyor.
+        /// </summary>
         [TestMethod]
         public void Test_Motor_Speed_Change_While_Running()
         {
             _conveyor.Start();
-            // FIX: Added SetSpeed call
             _motor.SetSpeed(80);
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Stop command should override previous start request, but system can restart later.
+        /// </summary>
         [TestMethod]
         public void Test_Stop_Command_Overrides_Start()
         {
@@ -205,6 +265,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Ensures routing logic produces expected lane distribution across weights.
+        /// </summary>
         [TestMethod]
         public void Test_Routing_Logic_Lane_Distribution()
         {
@@ -213,6 +276,9 @@ namespace Warehouse_Management_Test
             Assert.AreEqual("Lane3", _routing.Route("C", 30).TargetLane);
         }
 
+        /// <summary>
+        /// Safety interlock: conveyor must not run if jam is active.
+        /// </summary>
         [TestMethod]
         public void Test_Safety_Interlock_Jam()
         {
@@ -222,6 +288,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Fan state should influence energy scoring correctly.
+        /// </summary>
         [TestMethod]
         public void Test_Reporting_With_Active_Fan()
         {
@@ -232,6 +301,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(report.EnergyScore < 100);
         }
 
+        /// <summary>
+        /// Routing should change lane assignments based on input barcode/weight.
+        /// </summary>
         [TestMethod]
         public void Test_Barcode_Scan_Triggers_Lane_Change()
         {
@@ -240,6 +312,9 @@ namespace Warehouse_Management_Test
             Assert.AreNotEqual(r1.TargetLane, r2.TargetLane);
         }
 
+        /// <summary>
+        /// Full system cycle: start → stop → estop → reset → restart.
+        /// </summary>
         [TestMethod]
         public void Test_Full_Cycle_Reset()
         {
@@ -253,6 +328,9 @@ namespace Warehouse_Management_Test
             Assert.IsTrue(_hw.IsRunning);
         }
 
+        /// <summary>
+        /// Validates full hysteresis cycle for the temperature-controlled fan.
+        /// </summary>
         [TestMethod]
         public void Test_Temperature_Hysteresis_Cycle()
         {
@@ -264,6 +342,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(_fan.IsOn);
         }
 
+        /// <summary>
+        /// Verifies temperature samples persist across collection.
+        /// </summary>
         [TestMethod]
         public void Test_Sensor_Data_Persistence()
         {
@@ -273,6 +354,9 @@ namespace Warehouse_Management_Test
             Assert.AreEqual(2, samples.Count);
         }
 
+        /// <summary>
+        /// Ensures a fresh hardware instance starts in a safe disabled state.
+        /// </summary>
         [TestMethod]
         public void Test_Invalid_Component_State()
         {
@@ -280,6 +364,9 @@ namespace Warehouse_Management_Test
             Assert.IsFalse(localHW.IsRunning);
         }
 
+        /// <summary>
+        /// End-to-end test for light package routing through Lane1.
+        /// </summary>
         [TestMethod]
         public void Test_End_To_End_Routing_Lane1()
         {
@@ -288,6 +375,9 @@ namespace Warehouse_Management_Test
             Assert.AreEqual("Lane1", res.TargetLane);
         }
 
+        /// <summary>
+        /// End-to-end heavy routing should also log alarms if system behavior triggers logging.
+        /// </summary>
         [TestMethod]
         public void Test_End_To_End_Routing_Lane3_Alarm()
         {

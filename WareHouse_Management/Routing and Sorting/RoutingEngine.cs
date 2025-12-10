@@ -4,15 +4,16 @@ namespace Warehouse
 {
     public class RoutingEngine : IRoutingEngine
     {
-        // Define sorting thresholds
-        private const double LightLimit = 5.0;     // 0-5kg
-        private const double StandardLimit = 20.0; // 5-20kg
+        // Define sorting thresholds (kg)
+        private const double LightLimit = 5.0;
+        private const double StandardLimit = 20.0;
 
+        // Determines the destination lane based on package weight
         public Routing Route(string barcode, double weight)
         {
             string lane;
 
-            // Lane 1: Small/Light items (Express)
+            // Lane 1: Light items (Express)
             if (weight < LightLimit)
             {
                 lane = "Lane1";
@@ -22,7 +23,7 @@ namespace Warehouse
             {
                 lane = "Lane2";
             }
-            // Lane 3: Heavy/Overweight items (Special Handling)
+            // Lane 3: Heavy items (Special Handling)
             else
             {
                 lane = "Lane3";
