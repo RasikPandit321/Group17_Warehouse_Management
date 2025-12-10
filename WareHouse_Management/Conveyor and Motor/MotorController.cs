@@ -1,45 +1,38 @@
-﻿namespace WareHouse_Management.Conveyor_and_Motor
+﻿using System;
+
+namespace WareHouse_Management.Conveyor_and_Motor
 {
-    // Motor driver abstraction
-    public interface IMotorDriver
-    {
-        bool IsRunning { get; }
-        void StartForward();
-        void Stop();
-    }
-
-    // Safety inputs used to decide if starting is allowed.
-    public interface ISafetyInputs
-    {
-        bool EStop { get; }
-        bool Fault { get; }
-    }
-
-    // Controls the motor with safety checks.
     public class MotorController
     {
-        private readonly IMotorDriver _driver;
-        private readonly ISafetyInputs _safety;
-        public bool IsRunning => _driver.IsRunning;
+        private SimulatedHardware _hardware;
 
-        public MotorController(IMotorDriver driver, ISafetyInputs safety)
+        // FIX: Remove 'IJamSensor' and use 'SimulatedHardware'
+        // We accept it twice to match your Program.cs call: new MotorController(hardware, hardware)
+        public MotorController(SimulatedHardware hardware, SimulatedHardware jamSensor)
         {
-            _driver = driver;
-            _safety = safety;
+            _hardware = hardware;
         }
 
-        public bool Start()
+        public void Start()
         {
-            if (_safety.EStop || _safety.Fault)
-                return false;
-
-            if (_driver.IsRunning)
-                return true;
-
-            _driver.StartForward();
-            return true;
+            if (_hardware.EStop)
+            {
+                Console.WriteLine("Cannot start: E-Stop Active");
+                return;
+            }
+            _hardware.IsRunning = true;
         }
 
-        public void Stop() => _driver.Stop();
+        public void Stop()
+        {
+            _hardware.IsRunning = false;
+        }
+
+        public void SetSpeed(int speed)
+        {
+            if (speed < 0) speed = 0;
+            if (speed > 100) speed = 100;
+            // Speed logic would go here
+        }
     }
 }

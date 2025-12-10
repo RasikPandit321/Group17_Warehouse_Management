@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 
 namespace WareHouse_Management
 {
@@ -21,17 +22,27 @@ namespace WareHouse_Management
                 return;
             }
 
-            Console.WriteLine("📡 Starting barcode scan simulation...\n");
-            foreach (var line in File.ReadLines(_filePath))
+            Console.WriteLine("📡 Starting barcode scan simulation (Continuous Loop)...\n");
+
+            // FIX: Wraps the reading logic in an infinite loop
+            while (true)
             {
-                var barcode = line.Trim();
-                if (!string.IsNullOrEmpty(barcode))
+                foreach (var line in File.ReadLines(_filePath))
                 {
-                    Console.WriteLine($"Scanned: {barcode} at {DateTime.Now:T}");
-                    OnBarcodeScanned?.Invoke(barcode);
+                    var barcode = line.Trim();
+                    if (!string.IsNullOrEmpty(barcode))
+                    {
+                        // The Program.cs logic will decide if it should process this
+                        // based on whether the motor is running.
+                        OnBarcodeScanned?.Invoke(barcode);
+                    }
+
+                    // Scanning speed (500ms = 2 packages per second)
+                    Thread.Sleep(500);
                 }
-                // UPDATE: Reduced delay to 500ms to keep lanes full
-                System.Threading.Thread.Sleep(500);
+
+                // Optional: Short pause before restarting the batch
+                Thread.Sleep(1000);
             }
         }
     }

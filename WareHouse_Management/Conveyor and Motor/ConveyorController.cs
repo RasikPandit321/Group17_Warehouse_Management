@@ -1,66 +1,52 @@
-﻿// Purpose: Conveyor controller with jam detection
+﻿using System;
+using WareHouse_Management.Alarm_and_Estop;
 
 namespace WareHouse_Management.Conveyor_and_Motor
 {
-    // Jam sensor abstraction (real sensor or fake in tests).
-    public interface IJamSensor
-    {
-        bool JamDetected { get; }
-    }
-
-    // Coordinates motor controller with jam logic.
     public class ConveyorController
     {
-        private readonly MotorController _motor;
-        private readonly IJamSensor _jamSensor;
+        private MotorController _motor;
+        private SimulatedHardware _hardware;
 
-        // True when a jam has been detected.
-        public bool JamActive { get; private set; }
-
-        public ConveyorController(MotorController motor, IJamSensor jamSensor)
+        // FIX: Constructor uses concrete types
+        public ConveyorController(MotorController motor, SimulatedHardware hardware)
         {
             _motor = motor;
-            _jamSensor = jamSensor;
-            JamActive = false;
+            _hardware = hardware;
         }
 
-        // Start conveyor only if no jam is active.
-        public bool Start()
+        public void Start()
         {
-            if (JamActive)
+            if (_hardware.JamDetected || _hardware.EStop)
             {
-                return false; // cannot start during jam
+                Console.WriteLine("Cannot start: Jammed or E-Stopped");
+                return;
             }
-
-            // MotorController already checks EStop and Fault.
-            return _motor.Start();
+            _motor.Start();
         }
 
-        // Stop conveyor (just stop the motor).
         public void Stop()
         {
             _motor.Stop();
         }
 
-        // Check for jam and automatically stop if detected.
+        // FIX: Changed return type to void to fix CS0029
         public void CheckJam()
         {
-            if (_jamSensor.JamDetected)
+            if (_hardware.JamDetected)
             {
-                JamActive = true;
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("[CONVEYOR] Jam Detected! Stopping Motor.");
+                Console.ResetColor();
                 _motor.Stop();
+                Alarm.Raise("Conveyor Jammed");
             }
         }
 
-        // Clear jam state so the conveyor can be started again.
         public void ClearJam()
         {
-            // Only clear jam if sensor no longer detects jam
-            if (!_jamSensor.JamDetected)
-            {
-                JamActive = false;
-            }
-
+            _hardware.JamDetected = false;
+            Console.WriteLine("[CONVEYOR] Jam Cleared.");
         }
     }
 }

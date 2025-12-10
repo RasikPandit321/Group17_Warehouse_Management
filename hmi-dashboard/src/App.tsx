@@ -186,18 +186,24 @@ function App() {
                 <div className="routing-panel full-width">
                     <h2>📦 Live Lane Tracking</h2>
                     <div className="lanes-container">
-                        <div className="lane-box">
+
+                        {/* Lane 1: Added 'express' class */}
+                        <div className="lane-box express">
                             <h3>Lane 1 (Express)</h3>
                             <div className={`package-slot ${laneStatus ? 'blocked-lane' : (lanes.Lane1 ? 'occupied' : '')}`}>
                                 {laneStatus || lanes.Lane1 || "Empty"}
                             </div>
                         </div>
-                        <div className="lane-box">
+
+                        {/* Lane 2: Added 'standard' class */}
+                        <div className="lane-box standard">
                             <h3>Lane 2 (Standard)</h3>
                             <div className={`package-slot ${laneStatus ? 'blocked-lane' : (lanes.Lane2 ? 'occupied' : '')}`}>
                                 {laneStatus || lanes.Lane2 || "Empty"}
                             </div>
                         </div>
+
+                        {/* Lane 3: Already has 'heavy' class */}
                         <div className="lane-box heavy">
                             <h3>Lane 3 (Heavy)</h3>
                             <div className={`package-slot ${laneStatus ? 'blocked-lane' : (lanes.Lane3 ? 'occupied' : '')}`}>

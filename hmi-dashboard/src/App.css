@@ -493,3 +493,38 @@
         opacity: 1;
     }
 }
+
+/* --- Lane Colors --- */
+
+/* Lane 1: Express (Green) */
+.lane-box.express {
+    border-color: #4caf50;
+}
+
+    .lane-box.express .package-slot.occupied {
+        background: #4caf50;
+        color: white;
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+    }
+
+/* Lane 2: Standard (Blue) */
+.lane-box.standard {
+    border-color: #2196f3;
+}
+
+    .lane-box.standard .package-slot.occupied {
+        background: #2196f3;
+        color: white;
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+    }
+
+/* Lane 3: Heavy (Orange/Yellow) - Ensuring this override stays */
+.lane-box.heavy {
+    border-color: #ffbb33;
+}
+
+    .lane-box.heavy .package-slot.occupied {
+        background: #ffbb33;
+        color: black;
+        box-shadow: 0 0 15px rgba(255, 187, 51, 0.5);
+    }

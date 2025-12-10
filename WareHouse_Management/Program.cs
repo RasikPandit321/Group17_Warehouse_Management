@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using SocketIOClient;
-using AlarmService;
+using WareHouse_Management.Alarm_and_Estop;
 using WareHouse_Management.Conveyor_and_Motor;
 using WareHouse_Management.Environment;
 using Warehouse;
@@ -22,7 +22,7 @@ namespace WareHouse_Management
             Console.WriteLine("=== SMART WAREHOUSE SYSTEM (SPRINT 3) ===");
             Console.WriteLine("Connecting to HMI Dashboard...");
 
-            // --- 1. SOCKET.IO SETUP ---
+            // Setup Socket Connection
             client = new SocketIOClient.SocketIO("http://localhost:3001");
 
             client.OnConnected += (sender, e) =>
@@ -41,7 +41,7 @@ namespace WareHouse_Management
                 Console.WriteLine("⚠️ Could not connect to HMI. Is the Node server running?");
             }
 
-            // --- 2. SYSTEM SETUP ---
+            // Initialize Sensors and Controllers
             var tempSensor = new TemperatureSensor(20, 35);
             var fan = new FanController(30, 25);
             var energySamples = new List<EnergySample>();
@@ -53,7 +53,7 @@ namespace WareHouse_Management
             var routingEngine = new RoutingEngine();
             var diverter = new DiverterGateController();
 
-            // Create barcodes file if missing
+            // Create dummy barcode data if missing
             if (!System.IO.File.Exists("barcodes.txt"))
             {
                 var mockData = new List<string>();
@@ -64,22 +64,26 @@ namespace WareHouse_Management
             var scanner = new BarcodeScannerSensor("barcodes.txt");
             var random = new Random();
 
-            // --- 3. HELPER FUNCTIONS ---
+            // Helper function for Jam Simulation
             async void ToggleJam()
             {
                 hardware.JamDetected = !hardware.JamDetected;
                 if (hardware.JamDetected)
                 {
-                    conveyorCtrl.CheckJam();
+                    conveyorCtrl.CheckJam(); // Stops the motor
                     Alarm.Raise("Conveyor Jammed!");
                     await client.EmitAsync("alarm:new", new { message = "Conveyor Jammed!" });
                 }
                 else
                 {
                     conveyorCtrl.ClearJam();
+                    // Auto-restart motor when Jam is cleared
+                    Console.WriteLine(" [AUTO-RESTART] Resuming Conveyor...");
+                    conveyorCtrl.Start();
                 }
             }
 
+            // Helper function for E-Stop Simulation
             async void ToggleEStop()
             {
                 hardware.EStop = !hardware.EStop;
@@ -87,11 +91,24 @@ namespace WareHouse_Management
                 {
                     motorCtrl.Stop();
                     EmergencyStop.Estop("E-STOP ACTIVATED");
+
+                    // FIX: Added this line to trigger the Beep sound
+                    Alarm.Raise("E-STOP ACTIVATED");
+
                     await client.EmitAsync("alarm:new", new { message = "E-STOP ACTIVATED" });
+                }
+                else
+                {
+                    EmergencyStop.Reset("E-STOP CLEARED");
+                    await client.EmitAsync("alarm:new", new { message = "E-STOP CLEARED" });
+
+                    // Auto-restart motor when E-Stop is released
+                    Console.WriteLine(" [AUTO-RESTART] Resuming Conveyor...");
+                    conveyorCtrl.Start();
                 }
             }
 
-            // --- 4. WIRING EVENTS ---
+            // Handle Incoming Commands
             client.On("conveyor:start", _ => conveyorCtrl.Start());
             client.On("conveyor:stop", _ => conveyorCtrl.Stop());
             client.On("conveyor:speed", response =>
@@ -102,6 +119,7 @@ namespace WareHouse_Management
             client.On("sim:jam", _ => ToggleJam());
             client.On("sim:estop", _ => ToggleEStop());
 
+            // Handle Report Generation Request
             client.On("request:report", async _ =>
             {
                 string filename = await Task.Run(() =>
@@ -113,38 +131,36 @@ namespace WareHouse_Management
                 Console.WriteLine($"[REPORT] Generated: {filename}");
             });
 
-            // --- UPDATED ROUTING LOGIC ---
+            // Routing Event Logic
             scanner.OnBarcodeScanned += async (barcode) =>
             {
-                // FIX: Stop processing packages if the conveyor is stopped
+                // Do not process if conveyor is stopped
                 if (!hardware.IsRunning) return;
 
-                // Random weight 1.0kg to 60.0kg
                 double weight = random.NextDouble() * 59.0 + 1.0;
                 var route = routingEngine.Route(barcode, weight);
 
                 string logMsg = $"[ROUTING] {barcode} ({weight:F1}kg) -> {route.TargetLane}";
 
-                // Handling for the 3 Lanes
+                // Apply Routing Rules
                 if (route.TargetLane == "Lane3")
                 {
+                    // Heavy items just get logged in yellow, no alarm raised
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine(logMsg + " [HEAVY]");
-                    // Notify HMI of heavy item, but don't stop the motor
-                    await client.EmitAsync("alarm:new", new { message = $"Heavy Item Sorted: {barcode}" });
                     diverter.ActivateGate(route.TargetLane);
                 }
                 else
                 {
+                    // Standard routing
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     Console.WriteLine(logMsg);
                     diverter.ActivateGate(route.TargetLane);
                 }
                 Console.ResetColor();
 
+                // Update UI
                 await client.EmitAsync("barcode:scanned", new { code = barcode });
-
-                // Send BOTH 'zone' and 'code' so the UI knows what to display
                 await client.EmitAsync("diverter:activated", new
                 {
                     zone = route.TargetLane,
@@ -152,16 +168,17 @@ namespace WareHouse_Management
                 });
             };
 
-            // Start Scanner
+            // Start Scanner in background task
             _ = Task.Run(() => scanner.StartScanning());
 
             Console.WriteLine("System Running. Press [Q] to Quit, [J] Jam, [E] E-Stop.");
 
-            // --- 5. MAIN SIMULATION LOOP ---
-            DateTime startTime = DateTime.Now; // Track start time for the demo wave
+            DateTime startTime = DateTime.Now;
 
+            // Main Simulation Loop
             while (true)
             {
+                // Handle Keyboard Input
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true).Key;
@@ -172,16 +189,13 @@ namespace WareHouse_Management
                     if (key == ConsoleKey.X) conveyorCtrl.Stop();
                 }
 
-                // --- DEMO TEMPERATURE LOGIC ---
-                // Calculate seconds running
+                // Update Temperature (Sine Wave for Demo)
                 double t = (DateTime.Now - startTime).TotalSeconds;
-
-                // Create a wave that goes from 20C to 35C every ~15 seconds
-                // Thresholds: Fan ON at 30, OFF at 25
                 smoothedTemp = 27.5 + 8.0 * Math.Sin(t * 0.4);
 
                 fan.UpdateTemperature(smoothedTemp);
 
+                // Collect Data for Energy Report
                 energySamples.Add(new EnergySample
                 {
                     Temperature = smoothedTemp,
@@ -191,10 +205,9 @@ namespace WareHouse_Management
 
                 if (energySamples.Count > 100) energySamples.RemoveAt(0);
                 var report = EnergyReporter.ComputeFromSamples(energySamples, 0.4);
-
                 int actualSpeed = hardware.IsRunning ? conveyorSpeed : 0;
 
-                // Send Updates
+                // Send Live Data to Dashboard
                 await client.EmitAsync("system:update", new
                 {
                     conveyor = new { running = hardware.IsRunning, speed = actualSpeed },
@@ -202,7 +215,10 @@ namespace WareHouse_Management
                     flags = new { isJam = hardware.JamDetected, isEStop = hardware.EStop }
                 });
 
+                // Console Status Bar
                 Console.Write($"\r [ENV] {smoothedTemp:F1}C (Fan: {fan.IsOn}) Score: {report.EnergyScore:F0} | Motor: {hardware.IsRunning}   ");
+
+                // Controls loop speed
                 await Task.Delay(400);
             }
 

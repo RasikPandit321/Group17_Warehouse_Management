@@ -1,19 +1,23 @@
 ﻿using System;
-using LogService;
-using AlarmService;
-using static AlarmService.Alarm;
 
-public static class EmergencyStop
+namespace WareHouse_Management.Alarm_and_Estop
 {
-    public static void Estop(string message)
+    public static class EmergencyStop
     {
-        if (message == null) throw new ArgumentNullException(nameof(message));
-        if (string.IsNullOrWhiteSpace(message)) return;
+        public static void Estop(string reason)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"[EMERGENCY STOP] {reason}");
+            Console.ResetColor();
+            Log.Write($"[E-STOP] {reason}");
+        }
 
-        // Call the static Raise method on the external class
-        Raise(message);
-        Log.Archive(message);
-
-        return;
+        public static void Reset(string reason)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"[SYSTEM RESET] {reason}");
+            Console.ResetColor();
+            Log.Write($"[RESET] {reason}");
+        }
     }
 }

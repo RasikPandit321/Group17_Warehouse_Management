@@ -1,34 +1,19 @@
 ﻿using System;
-using WareHouse_Management.Conveyor_and_Motor;
 
-namespace WareHouse_Management
+namespace WareHouse_Management.Conveyor_and_Motor
 {
-    // This class acts as the physical motor, safety switches, and sensors for the simulation.
-    public class SimulatedHardware : IMotorDriver, ISafetyInputs, IJamSensor
+
+    public class SimulatedHardware
     {
-        // State
-        public bool IsRunning { get; private set; } = false;
-        public bool EStop { get; set; } = false;
-        public bool Fault { get; set; } = false;
-        public bool JamDetected { get; set; } = false;
+        public bool IsRunning { get; set; }
+        public bool JamDetected { get; set; }
+        public bool EStop { get; set; }
 
-        // IMotorDriver Implementation
-        public void StartForward()
+        public SimulatedHardware()
         {
-            if (!IsRunning)
-            {
-                IsRunning = true;
-                Console.WriteLine("   [HARDWARE] ⚙️ MOTOR STARTED (Forward)");
-            }
-        }
-
-        public void Stop()
-        {
-            if (IsRunning)
-            {
-                IsRunning = false;
-                Console.WriteLine("   [HARDWARE] 🛑 MOTOR STOPPED");
-            }
+            IsRunning = false;
+            JamDetected = false;
+            EStop = false;
         }
     }
 }
